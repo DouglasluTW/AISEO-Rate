@@ -838,19 +838,19 @@ def score_answer_extractability(signals: PageSignals) -> ScoreBreakdown:
 
     question_headings = sum(1 for _, text in signals.headings if is_question_like(text))
     if question_headings >= 2 or signals.has_faq_section:
-        points += 3
+        points += 2
         reasons.append("Page has FAQ or question-driven headings.")
     elif question_headings == 1:
-        points += 1.5
+        points += 1.0
         reasons.append("Page has at least one question-driven heading.")
     else:
         reasons.append("Missing FAQ or question-driven sections.")
 
     if len(signals.list_items) >= 3:
-        points += 3
+        points += 4
         reasons.append("Bulleted content exists and is extractable.")
     elif signals.list_items:
-        points += 1.5
+        points += 2
         reasons.append("Some list content exists.")
     else:
         reasons.append("Missing list-style content.")
@@ -1454,8 +1454,8 @@ def get_issue_catalog() -> list[AuditCheck]:
         AuditCheck("h1_missing", "Missing H1", "answer", "high", "The page lacks a primary heading.", "Add one clear H1 that matches the page intent.", lambda s: heading_count(s, "h1") == 0),
         AuditCheck("h2_missing", "Missing H2 sections", "answer", "medium", "The page lacks section anchors.", "Add H2 sections for the main ideas or decision criteria.", lambda s: heading_count(s, "h2") == 0),
         AuditCheck("h3_missing", "Missing H3 depth", "answer", "low", "The page has limited secondary structure.", "Add H3 headings where subtopics need chunking.", lambda s: heading_count(s, "h3") == 0),
-        AuditCheck("question_heading_missing", "No question-style headings", "answer", "medium", "The page is not framed around extractable questions.", "Add question-style subheads or FAQ blocks.", lambda s: not any(is_question_like(text) for _, text in s.headings)),
-        AuditCheck("faq_missing", "Missing FAQ section", "answer", "medium", "The page has no FAQ section.", "Add an FAQ section to capture recurring objections.", lambda s: not s.has_faq_section),
+        AuditCheck("question_heading_missing", "No question-style headings", "answer", "low", "The page is not framed around extractable questions.", "Add question-style subheads or FAQ blocks when the page format supports it.", lambda s: not any(is_question_like(text) for _, text in s.headings)),
+        AuditCheck("faq_missing", "Missing FAQ section", "answer", "low", "The page has no FAQ section.", "Add an FAQ section when the page benefits from objection handling or repeated questions.", lambda s: not s.has_faq_section),
         AuditCheck("list_missing", "Missing list structure", "answer", "medium", "The page lacks bullet-style answer chunks.", "Turn key comparison or takeaway sections into lists.", lambda s: len(s.list_items) == 0),
         AuditCheck("list_thin", "List structure is thin", "answer", "low", "The page has only a small amount of list structure.", "Expand comparison or takeaway lists.", lambda s: 0 < len(s.list_items) < 3),
         AuditCheck("table_missing", "Missing comparison table", "answer", "low", "No table was found for structured comparison.", "Add a table when the page compares options or specs.", lambda s: not s.has_table),
@@ -1475,7 +1475,7 @@ def get_issue_catalog() -> list[AuditCheck]:
         AuditCheck("secondary_structure_missing", "Secondary structure is weak", "structure", "medium", "The page lacks multi-level sectioning.", "Use H2 and H3 headings to separate major and minor ideas.", lambda s: heading_count(s, "h2") < 2 and heading_count(s, "h3") < 2),
         AuditCheck("extractable_units_missing", "Missing extractable answer units", "ai", "high", "The page is not broken into reusable answer chunks.", "Add lists, FAQs, or comparison blocks.", lambda s: len(s.list_items) == 0 and not s.has_table and not s.has_faq_section),
         AuditCheck("llmstxt_missing", "Missing llms.txt", "ai", "low", "No llms.txt file was detected.", "Consider publishing llms.txt at the site root.", lambda s: not s.llms_txt_found),
-        AuditCheck("ai_qa_signal_missing", "Weak AI question-answer signal", "ai", "medium", "The page lacks explicit QA framing.", "Add FAQ or question-led sections.", lambda s: not s.has_faq_section and not any(is_question_like(text) for _, text in s.headings)),
+        AuditCheck("ai_qa_signal_missing", "Weak AI question-answer signal", "ai", "low", "The page lacks explicit QA framing.", "Add FAQ or question-led sections if the topic naturally has repeated questions.", lambda s: not s.has_faq_section and not any(is_question_like(text) for _, text in s.headings)),
         AuditCheck("answer_decision_support_low", "Weak decision-support structure", "ai", "medium", "The page may be informative but not strongly decision-ready.", "Add comparisons, criteria, and a recommendation path.", lambda s: not s.has_table and len(s.list_items) < 3),
         AuditCheck("conclusion_first_missing", "Answer is not stated early", "resolution", "high", "The page does not state its conclusion in the opening blocks.", "Put the recommendation or decision in the first 1 to 2 paragraphs.", lambda s: not has_conclusion_first_signal(s)),
         AuditCheck("recommendation_missing", "No clear recommendation", "resolution", "high", "The page describes the topic but does not clearly choose or recommend.", "Add a recommendation, ranking, or pick-by-scenario conclusion.", lambda s: not has_recommendation_signal(s)),

@@ -489,6 +489,23 @@ def query_fit_score(query_row: QueryRow, signals: Any, item: SearchItem) -> tupl
     if has_scenario_split_signal(signals):
         score += 0.4
 
+    if intent in {"comparison", "recommendation"}:
+        if not has_recommendation_signal(signals) and not has_tradeoff_signal(signals) and not signals.has_table and len(signals.list_items) < 3:
+            score = min(score, 2.8)
+            reasons.append("Page matches keywords but does not complete the decision intent.")
+        elif not has_recommendation_signal(signals):
+            score = min(score, 3.6)
+            reasons.append("Page is relevant but still weak on recommendation intent.")
+    if intent == "local" and not any(term in page_text for term in ("台北", "taipei", "same day", "當天", "附近")):
+        score = min(score, 3.0)
+        reasons.append("Page does not show enough local-service alignment.")
+    if intent == "howto" and not any(term in normalize_text_for_match(page_text) for term in ("how", "steps", "step", "如何", "步驟")):
+        score = min(score, 3.2)
+        reasons.append("Page is not clearly structured as a how-to answer.")
+    if keywords and len(matched) < max(1, len(keywords) // 2):
+        score = min(score, 3.2)
+        reasons.append("Page only matches a small share of the query constraints.")
+
     score -= domain_penalty(urlparse(item.url).netloc.lower()) / 12.0
     return round(max(1.0, min(10.0, score)), 1), matched, reasons
 
@@ -530,7 +547,7 @@ def score_result(query_row: QueryRow, item: SearchItem, provider: str) -> dict[s
         page_score, breakdowns = score_page(signals)
         payload = build_payload(page_score, breakdowns, signals)
         query_fit, matched_keywords, fit_reasons = query_fit_score(query_row, signals, item)
-        combined_score = round(max(1.0, min(10.0, page_score * 0.70 + query_fit * 0.30)), 1)
+        combined_score = round(max(1.0, min(10.0, page_score * 0.60 + query_fit * 0.40)), 1)
         breakdown_map = {entry.name: round(entry.points, 2) for entry in breakdowns}
         suggestions = collect_suggestions(signals)
         issue_keys = [issue["key"] for issue in payload["audit"]["issues"][:8]]
