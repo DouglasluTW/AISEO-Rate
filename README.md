@@ -39,6 +39,7 @@ Every scored page is decomposed into five product-level lenses:
 
 - Scores a page with an explainable heuristic rubric
 - Decomposes results into both raw scoring layers and product-level lenses
+- Runs an extensible issue-audit catalog for site-health style diagnostics
 - Supports a local browser UI for URL-based audits
 - Supports query-driven batch workflows
 - Emits both human-readable text and machine-readable JSON

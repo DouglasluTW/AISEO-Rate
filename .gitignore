@@ -22,3 +22,6 @@ Thumbs.db
 results/
 output/
 *.log
+build/
+dist/
+*.spec

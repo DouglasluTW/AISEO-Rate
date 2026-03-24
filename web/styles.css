@@ -277,6 +277,37 @@ h1 {
   line-height: 1.65;
 }
 
+.audit-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.audit-stat {
+  min-width: 140px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.audit-stat-label {
+  display: block;
+  color: var(--muted);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.audit-stat strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.5rem;
+  letter-spacing: -0.05em;
+}
+
 .warning-box {
   margin-top: 16px;
   padding: 14px 16px;
@@ -401,11 +432,52 @@ h1 {
   line-height: 1.5;
 }
 
-.bullet-list {
-  margin: 14px 0 0;
-  padding-left: 18px;
+.issue-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.issue-card {
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.issue-topline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.issue-severity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(202, 90, 29, 0.12);
+  color: var(--accent);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.issue-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.issue-description,
+.issue-fix {
+  margin: 10px 0 0;
   color: var(--muted);
-  line-height: 1.65;
+  font-size: 0.93rem;
+  line-height: 1.55;
 }
 
 .signal-card {

@@ -65,6 +65,16 @@
               <p id="posture-line" class="posture-line">
                 This layer explains what kind of AI SEO posture the page currently projects.
               </p>
+              <div class="audit-stats">
+                <div class="audit-stat">
+                  <span class="audit-stat-label">Checks run</span>
+                  <strong id="checks-run">--</strong>
+                </div>
+                <div class="audit-stat">
+                  <span class="audit-stat-label">Issues found</span>
+                  <strong id="issues-found">--</strong>
+                </div>
+              </div>
               <div id="warning-box" class="warning-box hidden"></div>
             </div>
           </div>
@@ -86,11 +96,9 @@
 
         <section class="panel">
           <div class="panel-header">
-            <p class="panel-label">Priority fixes</p>
+            <p class="panel-label">Audit queue</p>
           </div>
-          <ul id="suggestions-list" class="bullet-list">
-            <li>Run a page to see the highest-impact fixes.</li>
-          </ul>
+          <div id="issue-list" class="issue-list"></div>
         </section>
 
         <section class="panel">
@@ -130,6 +138,17 @@
         <span class="signal-name"></span>
         <span class="signal-value"></span>
       </div>
+    </template>
+
+    <template id="issue-template">
+      <article class="issue-card">
+        <div class="issue-topline">
+          <span class="issue-severity"></span>
+          <h3 class="issue-title"></h3>
+        </div>
+        <p class="issue-description"></p>
+        <p class="issue-fix"></p>
+      </article>
     </template>
 
     <script src="/assets/app.js" defer></script>

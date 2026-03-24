@@ -12,6 +12,7 @@ import json
 import re
 import ssl
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from html import unescape
 from html.parser import HTMLParser
@@ -104,6 +105,17 @@ class ScoreBreakdown:
     points: float
     max_points: float
     reasons: list[str]
+
+
+@dataclass
+class AuditCheck:
+    key: str
+    title: str
+    category: str
+    severity: str
+    description: str
+    fix: str
+    predicate: Callable[["PageSignals"], bool]
 
 
 class SignalHTMLParser(HTMLParser):
@@ -738,6 +750,7 @@ def render_json(score: float, breakdowns: list[ScoreBreakdown], signals: PageSig
 
 def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageSignals) -> dict[str, object]:
     lenses = derive_lenses(breakdowns, signals)
+    audit = run_issue_audit(signals)
     return {
         "score": score,
         "source": signals.source,
@@ -745,6 +758,7 @@ def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageS
         "fetch_warning": signals.fetch_warning,
         "looks_like_block_page": looks_like_block_page(signals),
         "posture": classify_posture(score),
+        "audit": audit,
         "breakdown": [
             {
                 "name": item.name,
@@ -913,6 +927,95 @@ def summarize_structure(signals: PageSignals) -> str:
     if h2_count >= 1:
         return "The page has basic structure, but secondary organization is still weak."
     return "The page needs clearer sectioning and internal architecture."
+
+
+def heading_count(signals: PageSignals, level: str) -> int:
+    return sum(1 for tag, _ in signals.headings if tag == level)
+
+
+def visible_word_count(signals: PageSignals) -> int:
+    return word_count(signals.visible_text)
+
+
+def external_domain_count(signals: PageSignals) -> int:
+    return len(unique_domains(signals.external_links))
+
+
+def get_issue_catalog() -> list[AuditCheck]:
+    return [
+        AuditCheck("title_missing", "Missing title", "technical", "critical", "The page does not expose a title.", "Add a clear title tag.", lambda s: not s.title),
+        AuditCheck("title_short", "Title too short", "technical", "medium", "Short titles are less descriptive in search and AI surfaces.", "Expand the title to describe the page outcome.", lambda s: bool(s.title) and len(s.title) < 30),
+        AuditCheck("title_long", "Title too long", "technical", "medium", "Long titles are harder to surface cleanly.", "Trim the title to a tighter outcome-led version.", lambda s: len(s.title) > 65),
+        AuditCheck("meta_missing", "Missing meta description", "technical", "high", "The page is missing a summary snippet.", "Write a concise summary-oriented meta description.", lambda s: not s.meta_description),
+        AuditCheck("meta_short", "Meta description too short", "technical", "low", "Short descriptions often undersell the page.", "Expand the description to summarize the page answer.", lambda s: bool(s.meta_description) and len(s.meta_description) < 70),
+        AuditCheck("meta_long", "Meta description too long", "technical", "low", "Long descriptions lose clarity.", "Trim the description to the most useful promise.", lambda s: len(s.meta_description) > 180),
+        AuditCheck("canonical_missing", "Missing canonical", "technical", "high", "Canonical signals are missing.", "Add a canonical URL.", lambda s: not s.canonical),
+        AuditCheck("lang_missing", "Missing HTML lang", "technical", "medium", "Language metadata is missing.", "Add the correct lang attribute on the html tag.", lambda s: not s.lang),
+        AuditCheck("robots_noindex", "Page marked noindex", "technical", "critical", "The page appears blocked from indexability.", "Remove noindex if the page should be discoverable.", lambda s: "noindex" in s.robots),
+        AuditCheck("og_title_missing", "Missing Open Graph title", "technical", "medium", "The page lacks an OG title.", "Add og:title metadata.", lambda s: not s.og_title),
+        AuditCheck("og_description_missing", "Missing Open Graph description", "technical", "medium", "The page lacks an OG description.", "Add og:description metadata.", lambda s: not s.og_description),
+        AuditCheck("og_bundle_missing", "Open Graph not configured", "technical", "low", "The page has no complete Open Graph summary layer.", "Add both og:title and og:description.", lambda s: not s.og_title and not s.og_description),
+        AuditCheck("jsonld_missing", "Missing JSON-LD", "schema", "high", "Structured data is absent.", "Add JSON-LD using a relevant schema type.", lambda s: not s.json_ld_blocks),
+        AuditCheck("schema_type_missing", "No relevant schema type", "schema", "high", "No useful schema type was detected.", "Add WebPage, Article, Product, FAQPage, or another relevant type.", lambda s: not s.schema_types),
+        AuditCheck("schema_author_missing", "Schema missing author", "schema", "medium", "The schema layer does not name an author.", "Add author to structured data where relevant.", lambda s: s.json_ld_blocks and not s.schema_has_author),
+        AuditCheck("schema_publisher_missing", "Schema missing publisher", "schema", "medium", "The schema layer does not name a publisher.", "Add publisher to structured data.", lambda s: s.json_ld_blocks and not s.schema_has_publisher),
+        AuditCheck("schema_date_missing", "Schema missing date", "schema", "medium", "Structured data has no freshness field.", "Add datePublished or dateModified.", lambda s: s.json_ld_blocks and not s.schema_has_date),
+        AuditCheck("faq_schema_missing", "Missing FAQ or QA schema", "schema", "low", "No FAQPage or QAPage schema was found.", "Use FAQPage or QAPage where the content fits.", lambda s: "faqpage" not in s.schema_types and "qapage" not in s.schema_types),
+        AuditCheck("breadcrumb_schema_missing", "Missing breadcrumb schema", "schema", "low", "Breadcrumb schema was not detected.", "Add breadcrumb schema if the page sits in a content hierarchy.", lambda s: "breadcrumblist" not in s.schema_types),
+        AuditCheck("page_schema_missing", "Missing page-level schema", "schema", "low", "No WebPage or Article-like schema is present.", "Add a page-level schema type to frame the document.", lambda s: not ({"webpage", "article", "blogposting", "newsarticle"} & s.schema_types)),
+        AuditCheck("h1_missing", "Missing H1", "answer", "high", "The page lacks a primary heading.", "Add one clear H1 that matches the page intent.", lambda s: heading_count(s, "h1") == 0),
+        AuditCheck("h2_missing", "Missing H2 sections", "answer", "medium", "The page lacks section anchors.", "Add H2 sections for the main ideas or decision criteria.", lambda s: heading_count(s, "h2") == 0),
+        AuditCheck("h3_missing", "Missing H3 depth", "answer", "low", "The page has limited secondary structure.", "Add H3 headings where subtopics need chunking.", lambda s: heading_count(s, "h3") == 0),
+        AuditCheck("question_heading_missing", "No question-style headings", "answer", "medium", "The page is not framed around extractable questions.", "Add question-style subheads or FAQ blocks.", lambda s: not any(is_question_like(text) for _, text in s.headings)),
+        AuditCheck("faq_missing", "Missing FAQ section", "answer", "medium", "The page has no FAQ section.", "Add an FAQ section to capture recurring objections.", lambda s: not s.has_faq_section),
+        AuditCheck("list_missing", "Missing list structure", "answer", "medium", "The page lacks bullet-style answer chunks.", "Turn key comparison or takeaway sections into lists.", lambda s: len(s.list_items) == 0),
+        AuditCheck("list_thin", "List structure is thin", "answer", "low", "The page has only a small amount of list structure.", "Expand comparison or takeaway lists.", lambda s: 0 < len(s.list_items) < 3),
+        AuditCheck("table_missing", "Missing comparison table", "answer", "low", "No table was found for structured comparison.", "Add a table when the page compares options or specs.", lambda s: not s.has_table),
+        AuditCheck("opening_missing", "Missing clear opening paragraph", "answer", "high", "The page lacks a strong opening answer block.", "Add a top paragraph that states the answer or recommendation.", lambda s: len(s.paragraphs) == 0),
+        AuditCheck("paragraph_count_low", "Too few body paragraphs", "answer", "medium", "The page has thin paragraph structure.", "Add more explanatory paragraphs around key decisions.", lambda s: 0 < len(s.paragraphs) < 3),
+        AuditCheck("content_thin", "Content depth is thin", "answer", "medium", "The page may not have enough depth to support citation or decision-making.", "Add more original analysis, comparisons, and supporting detail.", lambda s: visible_word_count(s) < 300),
+        AuditCheck("content_not_deep", "Content depth is not substantial", "answer", "low", "The page may still feel lightweight for high-intent topics.", "Add deeper sections for edge cases, trade-offs, or FAQs.", lambda s: 300 <= visible_word_count(s) < 600),
+        AuditCheck("author_missing", "Missing author signal", "trust", "high", "No author signal was detected.", "Add author attribution in page copy or schema.", lambda s: not (s.author_mentions or s.schema_has_author)),
+        AuditCheck("date_missing", "Missing publish or update date", "trust", "high", "Freshness is not visible.", "Add published and updated dates.", lambda s: not (s.date_mentions or s.schema_has_date)),
+        AuditCheck("publisher_missing", "Missing publisher signal", "trust", "medium", "The publishing entity is unclear.", "Add brand or publisher information in copy or schema.", lambda s: not (s.organization_mentions or s.schema_has_publisher)),
+        AuditCheck("external_citations_missing", "Missing external citations", "trust", "medium", "The page does not point to supporting outside sources.", "Add references or source links for key claims.", lambda s: external_domain_count(s) == 0),
+        AuditCheck("external_citations_low", "Low citation diversity", "trust", "low", "The page cites only one external domain.", "Add a wider base of references if claims depend on trust.", lambda s: external_domain_count(s) == 1),
+        AuditCheck("internal_links_missing", "Missing internal links", "structure", "medium", "The page has no internal pathways to related content.", "Add internal links to related workflows, guides, or product pages.", lambda s: len(s.internal_links) == 0),
+        AuditCheck("internal_links_low", "Internal linking is thin", "structure", "low", "The page has only a small amount of internal linking.", "Add more internal links to deepen the information architecture.", lambda s: 0 < len(s.internal_links) < 3),
+        AuditCheck("image_alt_missing", "Missing image alt text", "structure", "medium", "No image alt signals were found.", "Add meaningful alt text to informative images.", lambda s: len(s.image_alts) == 0),
+        AuditCheck("image_alt_low", "Image alt coverage is low", "structure", "low", "Only a small amount of image alt text was found.", "Expand alt coverage on important images or diagrams.", lambda s: 0 < len(s.image_alts) < 2),
+        AuditCheck("secondary_structure_missing", "Secondary structure is weak", "structure", "medium", "The page lacks multi-level sectioning.", "Use H2 and H3 headings to separate major and minor ideas.", lambda s: heading_count(s, "h2") < 2 and heading_count(s, "h3") < 2),
+        AuditCheck("extractable_units_missing", "Missing extractable answer units", "ai", "high", "The page is not broken into reusable answer chunks.", "Add lists, FAQs, or comparison blocks.", lambda s: len(s.list_items) == 0 and not s.has_table and not s.has_faq_section),
+        AuditCheck("llmstxt_missing", "Missing llms.txt", "ai", "low", "No llms.txt file was detected.", "Consider publishing llms.txt at the site root.", lambda s: not s.llms_txt_found),
+        AuditCheck("ai_qa_signal_missing", "Weak AI question-answer signal", "ai", "medium", "The page lacks explicit QA framing.", "Add FAQ or question-led sections.", lambda s: not s.has_faq_section and not any(is_question_like(text) for _, text in s.headings)),
+        AuditCheck("answer_decision_support_low", "Weak decision-support structure", "ai", "medium", "The page may be informative but not strongly decision-ready.", "Add comparisons, criteria, and a recommendation path.", lambda s: not s.has_table and len(s.list_items) < 3),
+        AuditCheck("trust_stack_thin", "Trust stack is thin", "trust", "medium", "Too many trust signals are missing at once.", "Add author, date, publisher, and references as a stack.", lambda s: sum([bool(s.author_mentions or s.schema_has_author), bool(s.date_mentions or s.schema_has_date), bool(s.organization_mentions or s.schema_has_publisher), external_domain_count(s) >= 1]) <= 1),
+        AuditCheck("metadata_stack_thin", "Metadata stack is thin", "technical", "medium", "The page is missing too many metadata layers at once.", "Complete title, meta description, canonical, and OG coverage.", lambda s: sum([bool(s.title), bool(s.meta_description), bool(s.canonical), bool(s.og_title or s.og_description)]) <= 1),
+    ]
+
+
+def run_issue_audit(signals: PageSignals) -> dict[str, object]:
+    catalog = get_issue_catalog()
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    issues = []
+    for check in catalog:
+        if check.predicate(signals):
+            issues.append(
+                {
+                    "key": check.key,
+                    "title": check.title,
+                    "category": check.category,
+                    "severity": check.severity,
+                    "description": check.description,
+                    "fix": check.fix,
+                }
+            )
+    issues.sort(key=lambda item: (severity_order[item["severity"]], item["category"], item["title"]))
+    return {
+        "checks_run": len(catalog),
+        "issues_found": len(issues),
+        "issues": issues,
+    }
 
 
 def score_target(url: str | None = None, file_path: str | None = None) -> dict[str, object]:

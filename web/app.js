@@ -7,14 +7,17 @@ const scoreRing = document.getElementById("score-ring");
 const scoreHeadline = document.getElementById("score-headline");
 const sourceLine = document.getElementById("source-line");
 const postureLine = document.getElementById("posture-line");
+const checksRun = document.getElementById("checks-run");
+const issuesFound = document.getElementById("issues-found");
 const warningBox = document.getElementById("warning-box");
 const lensGrid = document.getElementById("lens-grid");
 const breakdownList = document.getElementById("breakdown-list");
-const suggestionsList = document.getElementById("suggestions-list");
+const issueList = document.getElementById("issue-list");
 const signalsGrid = document.getElementById("signals-grid");
 const lensTemplate = document.getElementById("lens-template");
 const breakdownTemplate = document.getElementById("breakdown-item-template");
 const signalTemplate = document.getElementById("signal-template");
+const issueTemplate = document.getElementById("issue-template");
 
 const signalOrder = [
   ["Title", (payload) => payload.signals.title || "Missing"],
@@ -79,12 +82,18 @@ function renderBreakdown(payload) {
   });
 }
 
-function renderSuggestions(payload) {
-  suggestionsList.replaceChildren();
-  payload.suggestions.slice(0, 6).forEach((suggestion) => {
-    const item = document.createElement("li");
-    item.textContent = suggestion;
-    suggestionsList.appendChild(item);
+function renderIssues(payload) {
+  issueList.replaceChildren();
+  checksRun.textContent = String(payload.audit.checks_run);
+  issuesFound.textContent = String(payload.audit.issues_found);
+
+  payload.audit.issues.slice(0, 6).forEach((issue) => {
+    const node = issueTemplate.content.cloneNode(true);
+    node.querySelector(".issue-severity").textContent = issue.severity;
+    node.querySelector(".issue-title").textContent = issue.title;
+    node.querySelector(".issue-description").textContent = issue.description;
+    node.querySelector(".issue-fix").textContent = issue.fix;
+    issueList.appendChild(node);
   });
 }
 
@@ -122,7 +131,7 @@ function renderResult(payload) {
 
   renderLenses(payload);
   renderBreakdown(payload);
-  renderSuggestions(payload);
+  renderIssues(payload);
   renderSignals(payload);
 }
 
@@ -147,10 +156,12 @@ function renderError(message) {
   scoreHeadline.textContent = "Unable to audit this page";
   sourceLine.textContent = message;
   postureLine.textContent = "The request failed before a reliable AI SEO posture could be computed.";
+  checksRun.textContent = "--";
+  issuesFound.textContent = "--";
   warningBox.classList.add("hidden");
   lensGrid.replaceChildren();
   breakdownList.replaceChildren();
-  suggestionsList.replaceChildren();
+  issueList.replaceChildren();
   signalsGrid.replaceChildren();
 }
 
