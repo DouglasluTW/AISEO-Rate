@@ -49,6 +49,121 @@ BLOCK_TERMS = (
     "cloudflare",
 )
 
+DECISION_TERMS = (
+    "recommend",
+    "recommended",
+    "best",
+    "should choose",
+    "worth it",
+    "pick",
+    "ideal",
+    "top choice",
+    "建議",
+    "推薦",
+    "最適合",
+    "最好",
+    "首選",
+    "值得",
+    "怎麼選",
+)
+
+SCENARIO_TERMS = (
+    "if you",
+    "for teams",
+    "for beginners",
+    "for small",
+    "for side sleepers",
+    "depending on",
+    "if your",
+    "如果",
+    "若你",
+    "適合",
+    "適用",
+    "對於",
+    "想要",
+    "需要",
+    "預算",
+)
+
+TRADEOFF_TERMS = (
+    "however",
+    "but",
+    "on the other hand",
+    "compared",
+    "vs",
+    "versus",
+    "pros",
+    "cons",
+    "trade-off",
+    "取捨",
+    "比較",
+    "差異",
+    "優點",
+    "缺點",
+    "但",
+    "不過",
+)
+
+NEXT_STEP_TERMS = (
+    "start with",
+    "choose",
+    "buy",
+    "book",
+    "sign up",
+    "contact",
+    "try",
+    "go with",
+    "從",
+    "開始",
+    "選擇",
+    "購買",
+    "預約",
+    "申請",
+    "先從",
+)
+
+HIGH_RISK_TERMS = (
+    "insurance",
+    "loan",
+    "mortgage",
+    "investment",
+    "credit card",
+    "tax",
+    "retirement",
+    "legal",
+    "lawyer",
+    "attorney",
+    "medical",
+    "symptom",
+    "treatment",
+    "diagnosis",
+    "drug",
+    "保險",
+    "貸款",
+    "投資",
+    "信用卡",
+    "稅",
+    "法律",
+    "律師",
+    "醫療",
+    "症狀",
+    "治療",
+    "診斷",
+    "藥",
+)
+
+MEDIUM_RISK_TERMS = (
+    "travel insurance",
+    "supplement",
+    "safety",
+    "warranty",
+    "certification",
+    "認證",
+    "安全",
+    "保固",
+    "比較",
+)
+
 RELEVANT_SCHEMA_TYPES = {
     "article",
     "blogposting",
@@ -383,62 +498,69 @@ def detect_llms_txt(signals: PageSignals) -> None:
 
 def score_page(signals: PageSignals) -> tuple[float, list[ScoreBreakdown]]:
     breakdowns = [
-        score_technical_foundation(signals),
-        score_schema(signals),
-        score_answer_quality(signals),
-        score_trust_and_entities(signals),
-        score_structure(signals),
-        score_ai_readiness(signals),
+        score_discovery_and_indexability(signals),
+        score_machine_readability(signals),
+        score_answer_extractability(signals),
+        score_trust_and_citation(signals),
+        score_added_value(signals),
+        score_task_resolution(signals),
     ]
     raw = sum(item.points for item in breakdowns)
-    normalized = 1.0 + (raw / 100.0) * 9.0
+    total = sum(item.max_points for item in breakdowns) or 100.0
+    normalized = 1.0 + (raw / total) * 9.0
     return round(min(10.0, max(1.0, normalized)), 1), breakdowns
 
 
-def score_technical_foundation(signals: PageSignals) -> ScoreBreakdown:
+def score_discovery_and_indexability(signals: PageSignals) -> ScoreBreakdown:
     points = 0.0
     reasons: list[str] = []
 
     title_len = len(signals.title)
     if 30 <= title_len <= 65:
-        points += 4
-        reasons.append("Title length is in a healthy range.")
-    elif signals.title:
         points += 2
-        reasons.append("Title exists but can be tuned.")
+        reasons.append("Title gives a usable discovery signal.")
+    elif signals.title:
+        points += 1
+        reasons.append("Title exists but is not yet ideal for discovery.")
     else:
         reasons.append("Missing title.")
 
     desc_len = len(signals.meta_description)
     if 80 <= desc_len <= 180:
-        points += 4
-        reasons.append("Meta description is summary-friendly.")
-    elif signals.meta_description:
         points += 2
+        reasons.append("Meta description supports clean snippet generation.")
+    elif signals.meta_description:
+        points += 1
         reasons.append("Meta description exists but can be sharper.")
     else:
         reasons.append("Missing meta description.")
 
     if signals.canonical:
-        points += 3
+        points += 2
         reasons.append("Canonical is present.")
     else:
         reasons.append("Missing canonical.")
 
     if signals.lang:
-        points += 2
+        points += 1
         reasons.append("HTML lang is present.")
     else:
         reasons.append("Missing HTML lang.")
 
+    if signals.http_status is None or 200 <= signals.http_status < 300:
+        points += 3
+        reasons.append("Fetch status is index-friendly.")
+    else:
+        reasons.append("Fetch status may block normal discovery.")
+
     if "noindex" not in signals.robots:
-        points += 4
+        points += 3
         reasons.append("No noindex directive detected.")
     else:
         reasons.append("Page appears to be noindex.")
 
     if signals.og_title and signals.og_description:
-        points += 3
+        points += 2
         reasons.append("Open Graph summary fields exist.")
     elif signals.og_title or signals.og_description:
         points += 1
@@ -446,21 +568,27 @@ def score_technical_foundation(signals: PageSignals) -> ScoreBreakdown:
     else:
         reasons.append("Missing Open Graph summary fields.")
 
-    return ScoreBreakdown("Technical foundation", points, 20, reasons)
+    if signals.llms_txt_found:
+        points += 1
+        reasons.append("llms.txt exists, but this is only a minor discovery signal.")
+    else:
+        reasons.append("llms.txt is absent, but this is not a core blocker.")
+
+    return ScoreBreakdown("Discovery and indexability", points, 15, reasons)
 
 
-def score_schema(signals: PageSignals) -> ScoreBreakdown:
+def score_machine_readability(signals: PageSignals) -> ScoreBreakdown:
     points = 0.0
     reasons: list[str] = []
 
     if signals.json_ld_blocks:
-        points += 8
+        points += 6
         reasons.append("JSON-LD was found.")
     else:
         reasons.append("No JSON-LD found.")
 
     if signals.schema_types:
-        points += min(8, 3 + len(signals.schema_types))
+        points += min(5, 2 + len(signals.schema_types))
         reasons.append(f"Detected schema types: {', '.join(sorted(signals.schema_types))}.")
     else:
         reasons.append("No common schema types detected.")
@@ -473,57 +601,95 @@ def score_schema(signals: PageSignals) -> ScoreBreakdown:
         ]
     )
     if schema_detail_hits:
-        points += min(4, schema_detail_hits * 1.5)
+        points += min(3, schema_detail_hits * 1.0)
         reasons.append("Schema includes author, publisher, or date details.")
     else:
         reasons.append("Schema lacks author, publisher, and date detail.")
 
-    return ScoreBreakdown("Structured data", points, 20, reasons)
-
-
-def score_answer_quality(signals: PageSignals) -> ScoreBreakdown:
-    points = 0.0
-    reasons: list[str] = []
-
     h1s = [text for tag, text in signals.headings if tag == "h1"]
     if h1s:
-        points += 4
+        points += 2
         reasons.append("Page has an H1.")
     else:
         reasons.append("Missing H1.")
 
+    h2_count = sum(1 for tag, _ in signals.headings if tag == "h2")
+    h3_count = sum(1 for tag, _ in signals.headings if tag == "h3")
+    if h2_count >= 2:
+        points += 2
+        reasons.append("H2 structure is clear.")
+    elif h2_count == 1:
+        points += 1
+        reasons.append("Basic H2 structure exists.")
+    else:
+        reasons.append("Weak H2 structure.")
+
+    if h3_count >= 2:
+        points += 1
+        reasons.append("Secondary structure is strong.")
+    elif h3_count:
+        points += 0.5
+        reasons.append("Some secondary structure exists.")
+    else:
+        reasons.append("Weak secondary structure.")
+
+    if len(signals.internal_links) >= 3:
+        points += 1
+        reasons.append("Internal linking supports machine understanding.")
+    elif signals.internal_links:
+        points += 0.5
+        reasons.append("Some internal linking exists.")
+    else:
+        reasons.append("No internal links found.")
+
+    if len(signals.image_alts) >= 2:
+        points += 1
+        reasons.append("Image alt signals exist.")
+    elif signals.image_alts:
+        points += 0.5
+        reasons.append("Some image alt signals exist.")
+    else:
+        reasons.append("No image alt signals found.")
+
+    return ScoreBreakdown("Machine readability", points, 20, reasons)
+
+
+def score_answer_extractability(signals: PageSignals) -> ScoreBreakdown:
+    points = 0.0
+    reasons: list[str] = []
+
     first_paragraph = signals.paragraphs[0] if signals.paragraphs else ""
     first_word_count = word_count(first_paragraph)
     if 35 <= first_word_count <= 90:
-        points += 7
+        points += 4
         reasons.append("Opening paragraph is answer-snippet friendly.")
     elif first_paragraph:
-        points += 3
+        points += 2
         reasons.append("Opening paragraph exists but is not strongly answer-first.")
     else:
         reasons.append("Missing a clear body opening paragraph.")
 
     question_headings = sum(1 for _, text in signals.headings if is_question_like(text))
     if question_headings >= 2 or signals.has_faq_section:
-        points += 6
+        points += 3
         reasons.append("Page has FAQ or question-driven headings.")
     elif question_headings == 1:
-        points += 3
+        points += 1.5
         reasons.append("Page has at least one question-driven heading.")
     else:
         reasons.append("Missing FAQ or question-driven sections.")
 
     if len(signals.list_items) >= 3:
-        points += 4
+        points += 3
         reasons.append("Bulleted content exists and is extractable.")
     elif signals.list_items:
-        points += 2
+        points += 1.5
         reasons.append("Some list content exists.")
     else:
         reasons.append("Missing list-style content.")
 
     if signals.has_table:
-        points += 2
+        points += 1.5
         reasons.append("Table content exists.")
     else:
         reasons.append("No table content found.")
@@ -537,117 +703,154 @@ def score_answer_quality(signals: PageSignals) -> ScoreBreakdown:
     else:
         reasons.append("Little to no paragraph content found.")
 
-    return ScoreBreakdown("Answer quality", points, 25, reasons)
+    if len(signals.headings) >= 4:
+        points += 1.5
+        reasons.append("The page has enough heading chunks to be reusable.")
+    elif signals.headings:
+        points += 0.5
+        reasons.append("The page has some heading chunking.")
+    else:
+        reasons.append("The page lacks reusable heading chunks.")
+
+    return ScoreBreakdown("Answer extractability", points, 15, reasons)
 
 
-def score_trust_and_entities(signals: PageSignals) -> ScoreBreakdown:
+def score_trust_and_citation(signals: PageSignals) -> ScoreBreakdown:
     points = 0.0
     reasons: list[str] = []
 
     if signals.author_mentions or signals.schema_has_author:
-        points += 5
+        points += 3
         reasons.append("Author signal exists.")
     else:
         reasons.append("Missing author signal.")
 
     if signals.date_mentions or signals.schema_has_date:
-        points += 5
+        points += 3
         reasons.append("Publish or update date exists.")
     else:
         reasons.append("Missing freshness signal.")
 
     external_domains = unique_domains(signals.external_links)
     if len(external_domains) >= 2:
-        points += 4
+        points += 3
         reasons.append("Page cites multiple external domains.")
     elif external_domains:
-        points += 2
+        points += 1.5
         reasons.append("Page cites at least one external domain.")
     else:
         reasons.append("Missing external citation signals.")
 
     if signals.organization_mentions or signals.schema_has_publisher:
-        points += 3
+        points += 2
         reasons.append("Publisher or organization signal exists.")
     else:
         reasons.append("Missing publisher or organization signal.")
 
     wc = word_count(signals.visible_text)
     if wc >= 600:
-        points += 3
+        points += 2
         reasons.append("Content depth is substantial.")
     elif wc >= 250:
-        points += 1.5
+        points += 1
         reasons.append("Content depth is moderate.")
     else:
         reasons.append("Content depth is thin.")
 
-    return ScoreBreakdown("Trust and entities", points, 20, reasons)
+    topic_risk = classify_topic_risk(signals)
+    if topic_risk == "high":
+        reasons.append("High-risk topic detected; the trust bar is higher.")
+        if not (signals.author_mentions or signals.schema_has_author):
+            points -= 1.5
+        if not (signals.date_mentions or signals.schema_has_date):
+            points -= 1.5
+        if len(external_domains) == 0:
+            points -= 1.5
+    elif topic_risk == "medium":
+        reasons.append("Medium-risk topic detected; trust signals still matter.")
+        if len(external_domains) == 0:
+            points -= 0.5
+
+    return ScoreBreakdown("Trust and citation", max(0.0, points), 15, reasons)
 
 
-def score_structure(signals: PageSignals) -> ScoreBreakdown:
+def score_added_value(signals: PageSignals) -> ScoreBreakdown:
     points = 0.0
     reasons: list[str] = []
 
-    h2_count = sum(1 for tag, _ in signals.headings if tag == "h2")
-    h3_count = sum(1 for tag, _ in signals.headings if tag == "h3")
-    if h2_count >= 2:
-        points += 4
-        reasons.append("H2 structure is clear.")
-    elif h2_count == 1:
-        points += 2
-        reasons.append("Basic H2 structure exists.")
-    else:
-        reasons.append("Weak H2 structure.")
-
-    if h3_count >= 2:
-        points += 2
-        reasons.append("Secondary structure is strong.")
-    elif h3_count:
-        points += 1
-        reasons.append("Some secondary structure exists.")
-    else:
-        reasons.append("Weak secondary structure.")
-
-    internal_count = len(signals.internal_links)
-    if internal_count >= 5:
-        points += 2
-        reasons.append("Internal linking is healthy.")
-    elif internal_count >= 1:
-        points += 1
-        reasons.append("Some internal linking exists.")
-    else:
-        reasons.append("No internal links found.")
-
-    if len(signals.image_alts) >= 2:
-        points += 2
-        reasons.append("Image alt signals exist.")
-    elif signals.image_alts:
-        points += 1
-        reasons.append("Some image alt signals exist.")
-    else:
-        reasons.append("No image alt signals found.")
-
-    return ScoreBreakdown("Structure", points, 10, reasons)
-
-
-def score_ai_readiness(signals: PageSignals) -> ScoreBreakdown:
-    points = 0.0
-    reasons: list[str] = []
-
-    if signals.llms_txt_found:
+    specificity = count_specificity_markers(signals)
+    if specificity >= 8:
+        points += 5
+        reasons.append("The page uses concrete details, numbers, or constraints.")
+    elif specificity >= 4:
         points += 3
-        reasons.append("llms.txt was detected.")
+        reasons.append("The page includes some specific detail.")
     else:
-        reasons.append("llms.txt was not detected.")
+        reasons.append("The page lacks enough concrete specifics.")
 
-    if signals.has_faq_section or "faqpage" in signals.schema_types or "qapage" in signals.schema_types:
+    if has_tradeoff_signal(signals):
+        points += 4
+        reasons.append("The page explains trade-offs instead of listing features only.")
+    else:
+        reasons.append("The page does not surface clear trade-offs.")
+
+    if signals.has_table or len(signals.list_items) >= 3:
+        points += 3
+        reasons.append("The page synthesizes information into reusable structures.")
+    else:
+        reasons.append("The page does not yet synthesize information into comparison structures.")
+
+    if visible_word_count(signals) >= 600 and external_domain_count(signals) >= 1:
         points += 2
-        reasons.append("FAQ or QA signal exists.")
+        reasons.append("The page combines depth with some evidence.")
+    elif visible_word_count(signals) >= 300:
+        points += 1
+        reasons.append("The page has moderate detail.")
     else:
-        reasons.append("FAQ or QA signal is weak.")
+        reasons.append("The page still feels thin on original or synthesized detail.")
 
-    return ScoreBreakdown("AI readiness", points, 5, reasons)
+    if signals.date_mentions or signals.schema_has_date:
+        points += 1
+        reasons.append("Visible freshness helps the page carry current value.")
+
+    return ScoreBreakdown("Added value", points, 15, reasons)
+
+
+def score_task_resolution(signals: PageSignals) -> ScoreBreakdown:
+    points = 0.0
+    reasons: list[str] = []
+
+    if has_conclusion_first_signal(signals):
+        points += 5
+        reasons.append("The page surfaces a conclusion early.")
+    else:
+        reasons.append("The page does not state the answer early enough.")
+
+    if has_recommendation_signal(signals):
+        points += 4
+        reasons.append("The page makes a recommendation, not just an observation.")
+    else:
+        reasons.append("The page does not clearly recommend or choose.")
+
+    if has_scenario_split_signal(signals):
+        points += 4
+        reasons.append("The page differentiates by audience or use case.")
+    else:
+        reasons.append("The page does not split the answer by scenario or persona.")
+
+    if has_tradeoff_signal(signals):
+        points += 4
+        reasons.append("The page clarifies trade-offs.")
+    else:
+        reasons.append("The page does not make trade-offs explicit.")
+
+    if has_next_step_signal(signals):
+        points += 3
+        reasons.append("The page gives an actionable next step.")
+    else:
+        reasons.append("The page does not guide the next action clearly.")
+
+    return ScoreBreakdown("Task resolution", points, 20, reasons)
 
 
 def average(values: Iterable[float]) -> float:
@@ -686,6 +889,14 @@ def looks_like_block_page(signals: PageSignals) -> bool:
 
 def collect_suggestions(signals: PageSignals) -> list[str]:
     suggestions: list[str] = []
+    if not has_conclusion_first_signal(signals):
+        suggestions.append("State the answer or recommendation in the first 1 to 2 paragraphs.")
+    if not has_recommendation_signal(signals):
+        suggestions.append("Make the page choose, recommend, or rank instead of only describing options.")
+    if not has_scenario_split_signal(signals):
+        suggestions.append("Split the advice by scenario, budget, or user type.")
+    if not has_tradeoff_signal(signals):
+        suggestions.append("Explain trade-offs, not just features.")
     if not signals.json_ld_blocks:
         suggestions.append("Add JSON-LD, at least WebPage, Article, or Organization.")
     if not signals.has_faq_section:
@@ -698,12 +909,16 @@ def collect_suggestions(signals: PageSignals) -> list[str]:
         suggestions.append("Add a canonical URL.")
     if not signals.meta_description:
         suggestions.append("Write a summary-focused meta description.")
-    if not signals.llms_txt_found:
-        suggestions.append("Consider adding llms.txt at the site root.")
+    if classify_topic_risk(signals) == "high" and not signals.external_links:
+        suggestions.append("For high-risk topics, support claims with visible citations and stronger authorship.")
     if len(signals.list_items) < 3:
         suggestions.append("Turn key sections into lists for easier extraction.")
     if not signals.external_links:
         suggestions.append("Add external citations or references.")
+    if count_specificity_markers(signals) < 4:
+        suggestions.append("Add concrete numbers, constraints, prices, or dated specifics to create real added value.")
+    if not signals.llms_txt_found:
+        suggestions.append("Consider adding llms.txt at the site root, but do not treat it as a core ranking fix.")
     if not suggestions:
         suggestions.append("Strong baseline. Next step: tune paragraph length and schema detail.")
     return suggestions
@@ -783,6 +998,13 @@ def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageS
             "list_items": len(signals.list_items),
             "word_count": word_count(signals.visible_text),
             "llms_txt_found": signals.llms_txt_found,
+            "topic_risk": classify_topic_risk(signals),
+            "conclusion_first": has_conclusion_first_signal(signals),
+            "recommendation_signal": has_recommendation_signal(signals),
+            "scenario_split": has_scenario_split_signal(signals),
+            "tradeoff_signal": has_tradeoff_signal(signals),
+            "next_step_signal": has_next_step_signal(signals),
+            "specificity_markers": count_specificity_markers(signals),
         },
         "suggestions": collect_suggestions(signals),
     }
@@ -803,31 +1025,29 @@ def classify_posture(score: float) -> str:
 def derive_lenses(breakdowns: list[ScoreBreakdown], signals: PageSignals) -> list[dict[str, object]]:
     breakdown_map = {item.name: item for item in breakdowns}
 
-    tech_ratio = normalized_ratio(breakdown_map["Technical foundation"])
-    schema_ratio = normalized_ratio(breakdown_map["Structured data"])
-    answer_ratio = normalized_ratio(breakdown_map["Answer quality"])
-    trust_ratio = normalized_ratio(breakdown_map["Trust and entities"])
-    structure_ratio = normalized_ratio(breakdown_map["Structure"])
-    ai_ratio = normalized_ratio(breakdown_map["AI readiness"])
+    discovery_ratio = normalized_ratio(breakdown_map["Discovery and indexability"])
+    readability_ratio = normalized_ratio(breakdown_map["Machine readability"])
+    extractability_ratio = normalized_ratio(breakdown_map["Answer extractability"])
+    trust_ratio = normalized_ratio(breakdown_map["Trust and citation"])
+    added_value_ratio = normalized_ratio(breakdown_map["Added value"])
+    resolution_ratio = normalized_ratio(breakdown_map["Task resolution"])
 
     lenses = [
         {
             "name": "Extractability",
             "score": weighted_score(
-                answer_ratio * 0.40
-                + structure_ratio * 0.20
-                + schema_ratio * 0.25
-                + ai_ratio * 0.15
+                readability_ratio * 0.40
+                + extractability_ratio * 0.45
+                + discovery_ratio * 0.15
             ),
             "summary": summarize_extractability(signals),
         },
         {
             "name": "Resolution",
             "score": weighted_score(
-                answer_ratio * 0.55
-                + trust_ratio * 0.20
-                + structure_ratio * 0.15
-                + tech_ratio * 0.10
+                resolution_ratio * 0.60
+                + extractability_ratio * 0.20
+                + added_value_ratio * 0.20
             ),
             "summary": summarize_resolution(signals),
         },
@@ -835,32 +1055,32 @@ def derive_lenses(breakdowns: list[ScoreBreakdown], signals: PageSignals) -> lis
             "name": "Citation trust",
             "score": weighted_score(
                 trust_ratio * 0.60
-                + schema_ratio * 0.20
-                + tech_ratio * 0.10
-                + ai_ratio * 0.10
+                + discovery_ratio * 0.15
+                + readability_ratio * 0.10
+                + added_value_ratio * 0.15
             ),
             "summary": summarize_trust(signals),
         },
         {
             "name": "Surface visibility",
             "score": weighted_score(
-                tech_ratio * 0.35
-                + answer_ratio * 0.25
-                + schema_ratio * 0.20
+                discovery_ratio * 0.40
+                + readability_ratio * 0.25
+                + extractability_ratio * 0.15
                 + trust_ratio * 0.10
-                + ai_ratio * 0.10
+                + resolution_ratio * 0.10
             ),
             "summary": summarize_visibility(signals),
         },
         {
-            "name": "Content structure",
+            "name": "Added value",
             "score": weighted_score(
-                structure_ratio * 0.45
-                + answer_ratio * 0.25
-                + tech_ratio * 0.15
-                + schema_ratio * 0.15
+                added_value_ratio * 0.60
+                + trust_ratio * 0.10
+                + extractability_ratio * 0.15
+                + resolution_ratio * 0.15
             ),
-            "summary": summarize_structure(signals),
+            "summary": summarize_added_value(signals),
         },
     ]
     return lenses
@@ -874,6 +1094,68 @@ def normalized_ratio(item: ScoreBreakdown) -> float:
 
 def weighted_score(value: float) -> float:
     return round(max(1.0, min(10.0, value * 10.0)), 1)
+
+
+def first_blocks_text(signals: PageSignals, count: int = 2) -> str:
+    parts = signals.paragraphs[:count]
+    if not parts:
+        parts = [text for _, text in signals.headings[:count]]
+    return " ".join(parts).lower()
+
+
+def has_any_term(text: str, terms: Iterable[str]) -> bool:
+    lowered = text.lower()
+    return any(term in lowered for term in terms)
+
+
+def has_conclusion_first_signal(signals: PageSignals) -> bool:
+    opening = first_blocks_text(signals, 2)
+    return bool(opening) and has_any_term(opening, DECISION_TERMS)
+
+
+def has_recommendation_signal(signals: PageSignals) -> bool:
+    window = " ".join(signals.paragraphs[:4] + signals.list_items[:6]).lower()
+    return has_any_term(window, DECISION_TERMS)
+
+
+def has_scenario_split_signal(signals: PageSignals) -> bool:
+    blocks = " ".join([text for _, text in signals.headings[:8]] + signals.paragraphs[:5] + signals.list_items[:8]).lower()
+    return has_any_term(blocks, SCENARIO_TERMS)
+
+
+def has_tradeoff_signal(signals: PageSignals) -> bool:
+    window = " ".join([text for _, text in signals.headings[:10]] + signals.paragraphs[:8] + signals.list_items[:8]).lower()
+    return has_any_term(window, TRADEOFF_TERMS)
+
+
+def has_next_step_signal(signals: PageSignals) -> bool:
+    body = " ".join(signals.paragraphs[-3:] + signals.list_items[-6:]).lower()
+    return has_any_term(body, NEXT_STEP_TERMS)
+
+
+def count_specificity_markers(signals: PageSignals) -> int:
+    text = signals.visible_text[:4000]
+    patterns = [
+        r"\$\d+",
+        r"\d+\s?(?:usd|eur|gbp|ntd|twd|kg|km|gb|tb|w|hz|mah|inch|坪|元|年|月|天|人)",
+        r"\d+%",
+        r"\b20\d{2}\b",
+        r"\bunder\s+\$?\d+",
+        r"\bbelow\s+\$?\d+",
+    ]
+    total = 0
+    for pattern in patterns:
+        total += len(re.findall(pattern, text, flags=re.IGNORECASE))
+    return total
+
+
+def classify_topic_risk(signals: PageSignals) -> str:
+    text = (signals.title + " " + " ".join(text for _, text in signals.headings[:8]) + " " + signals.visible_text[:1500]).lower()
+    if has_any_term(text, HIGH_RISK_TERMS):
+        return "high"
+    if has_any_term(text, MEDIUM_RISK_TERMS):
+        return "medium"
+    return "low"
 
 
 def summarize_extractability(signals: PageSignals) -> str:
@@ -890,11 +1172,11 @@ def summarize_extractability(signals: PageSignals) -> str:
 
 
 def summarize_resolution(signals: PageSignals) -> str:
-    if signals.paragraphs and len(signals.list_items) >= 3:
-        return "The page gives content and comparison structure, but may still need a clearer conclusion."
-    if signals.paragraphs:
-        return "The page starts to answer the topic, but the decision path is still thin."
-    return "The page lacks a strong answer-first body."
+    if has_conclusion_first_signal(signals) and has_tradeoff_signal(signals):
+        return "The page starts with a point of view and explains trade-offs."
+    if has_conclusion_first_signal(signals):
+        return "The page starts to resolve the query, but the decision path is still incomplete."
+    return "The page does not state the answer early enough."
 
 
 def summarize_trust(signals: PageSignals) -> str:
@@ -909,7 +1191,9 @@ def summarize_trust(signals: PageSignals) -> str:
         trust_parts.append("citations")
     if not trust_parts:
         return "Trust signals are weak. Add authorship, freshness, and verifiable references."
-    return "Trust layer includes " + ", ".join(trust_parts[:4]) + "."
+    topic_risk = classify_topic_risk(signals)
+    suffix = " High-risk topic detected." if topic_risk == "high" else ""
+    return "Trust layer includes " + ", ".join(trust_parts[:4]) + "." + suffix
 
 
 def summarize_visibility(signals: PageSignals) -> str:
@@ -920,13 +1204,12 @@ def summarize_visibility(signals: PageSignals) -> str:
     return "The page lacks the baseline metadata needed for broader visibility."
 
 
-def summarize_structure(signals: PageSignals) -> str:
-    h2_count = sum(1 for tag, _ in signals.headings if tag == "h2")
-    if h2_count >= 2 and len(signals.internal_links) >= 1:
-        return "The page is segmented well enough for scanning and reuse."
-    if h2_count >= 1:
-        return "The page has basic structure, but secondary organization is still weak."
-    return "The page needs clearer sectioning and internal architecture."
+def summarize_added_value(signals: PageSignals) -> str:
+    if count_specificity_markers(signals) >= 8 and has_tradeoff_signal(signals):
+        return "The page uses concrete specifics and trade-offs, which feels more like added value."
+    if count_specificity_markers(signals) >= 4:
+        return "The page includes some concrete detail, but the synthesis layer can be stronger."
+    return "The page still reads more like generic information than a value-added answer."
 
 
 def heading_count(signals: PageSignals, level: str) -> int:
@@ -989,6 +1272,14 @@ def get_issue_catalog() -> list[AuditCheck]:
         AuditCheck("llmstxt_missing", "Missing llms.txt", "ai", "low", "No llms.txt file was detected.", "Consider publishing llms.txt at the site root.", lambda s: not s.llms_txt_found),
         AuditCheck("ai_qa_signal_missing", "Weak AI question-answer signal", "ai", "medium", "The page lacks explicit QA framing.", "Add FAQ or question-led sections.", lambda s: not s.has_faq_section and not any(is_question_like(text) for _, text in s.headings)),
         AuditCheck("answer_decision_support_low", "Weak decision-support structure", "ai", "medium", "The page may be informative but not strongly decision-ready.", "Add comparisons, criteria, and a recommendation path.", lambda s: not s.has_table and len(s.list_items) < 3),
+        AuditCheck("conclusion_first_missing", "Answer is not stated early", "resolution", "high", "The page does not state its conclusion in the opening blocks.", "Put the recommendation or decision in the first 1 to 2 paragraphs.", lambda s: not has_conclusion_first_signal(s)),
+        AuditCheck("recommendation_missing", "No clear recommendation", "resolution", "high", "The page describes the topic but does not clearly choose or recommend.", "Add a recommendation, ranking, or pick-by-scenario conclusion.", lambda s: not has_recommendation_signal(s)),
+        AuditCheck("scenario_split_missing", "No scenario split", "resolution", "medium", "The page does not adapt the answer by audience, use case, or budget.", "Split the answer by use case, budget, or user type.", lambda s: not has_scenario_split_signal(s)),
+        AuditCheck("tradeoff_missing", "Trade-offs are not explicit", "resolution", "medium", "The page does not explain what the reader gains or gives up.", "Add pros, cons, and trade-off framing.", lambda s: not has_tradeoff_signal(s)),
+        AuditCheck("next_step_missing", "No next action", "resolution", "low", "The page does not tell the reader what to do next.", "Add a direct next step or choice path.", lambda s: not has_next_step_signal(s)),
+        AuditCheck("specificity_low", "Low specificity", "value", "medium", "The page lacks enough concrete detail to feel genuinely useful.", "Add prices, limits, dates, specs, or other concrete constraints.", lambda s: count_specificity_markers(s) < 4),
+        AuditCheck("specificity_moderate", "Specificity could be stronger", "value", "low", "The page has some specifics, but not enough to feel differentiated.", "Add more concrete numbers and constraints.", lambda s: 4 <= count_specificity_markers(s) < 8),
+        AuditCheck("risk_trust_gap", "High-risk topic with weak trust stack", "trust", "critical", "This looks like a high-risk topic, but trust signals are incomplete.", "For high-risk topics, add author, date, publisher, and citations together.", lambda s: classify_topic_risk(s) == "high" and sum([bool(s.author_mentions or s.schema_has_author), bool(s.date_mentions or s.schema_has_date), bool(s.organization_mentions or s.schema_has_publisher), external_domain_count(s) >= 1]) <= 2),
         AuditCheck("trust_stack_thin", "Trust stack is thin", "trust", "medium", "Too many trust signals are missing at once.", "Add author, date, publisher, and references as a stack.", lambda s: sum([bool(s.author_mentions or s.schema_has_author), bool(s.date_mentions or s.schema_has_date), bool(s.organization_mentions or s.schema_has_publisher), external_domain_count(s) >= 1]) <= 1),
         AuditCheck("metadata_stack_thin", "Metadata stack is thin", "technical", "medium", "The page is missing too many metadata layers at once.", "Complete title, meta description, canonical, and OG coverage.", lambda s: sum([bool(s.title), bool(s.meta_description), bool(s.canonical), bool(s.og_title or s.og_description)]) <= 1),
     ]
@@ -1038,30 +1329,14 @@ def main() -> int:
         parser.error("Use only one of --url or --file.")
 
     try:
-        payload = score_target(args.url, args.file)
+        html, source, http_status, fetch_warning = load_input(args.url, args.file)
+        signals = parse_page(html, source, http_status=http_status, fetch_warning=fetch_warning)
+        score, breakdowns = score_page(signals)
+        payload = build_payload(score, breakdowns, signals)
         if args.json:
             output = json.dumps(payload, ensure_ascii=False, indent=2)
         else:
-            breakdowns = [
-                ScoreBreakdown(
-                    name=item["name"],
-                    points=float(item["points"]),
-                    max_points=float(item["max_points"]),
-                    reasons=list(item["reasons"]),
-                )
-                for item in payload["breakdown"]
-            ]
-            signals = PageSignals(
-                source=str(payload["source"]),
-                http_status=payload["http_status"],
-                fetch_warning=str(payload["fetch_warning"]),
-            )
-            signals.meta_description = str(payload["signals"]["meta_description"])
-            signals.canonical = str(payload["signals"]["canonical"])
-            signals.lang = str(payload["signals"]["lang"])
-            signals.llms_txt_found = bool(payload["signals"]["llms_txt_found"])
-            signals.has_faq_section = bool(payload["signals"]["has_faq_section"])
-            output = render_report(float(payload["score"]), breakdowns, signals)
+            output = render_report(score, breakdowns, signals)
         print(output)
         return 0
     except Exception as exc:

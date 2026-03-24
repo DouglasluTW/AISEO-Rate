@@ -32,8 +32,16 @@ Every scored page is decomposed into five product-level lenses:
   Does the page look trustworthy enough to cite?
 - `Surface visibility`
   Does the page have the metadata and framing to surface cleanly?
-- `Content structure`
-  Is the page segmented well enough to scan and repurpose?
+- `Added value`
+  Does the page contribute concrete detail, comparisons, or synthesis beyond generic copy?
+
+The scoring model is intentionally biased toward current AI-search realities:
+
+- pages must be discoverable and machine-readable
+- pages must be easy to extract and summarize
+- pages must be trustworthy enough to cite
+- pages must actually resolve the user task
+- high-risk topics are held to a higher trust bar
 
 ## What It Does
 
@@ -116,18 +124,18 @@ Template columns:
 
 Current scoring dimensions:
 
-- Technical foundation
-  - title, meta description, canonical, lang, Open Graph, robots
-- Structured data
-  - JSON-LD, schema types, author, publisher, date
-- Answer quality
-  - H1, opening paragraph, FAQ, lists, tables, paragraph density
-- Trust and entities
-  - author, date, citations, publisher, content depth
-- Structure
-  - H2/H3, internal links, image alts
-- AI readiness
-  - `llms.txt`, FAQ and QA signals
+- Discovery and indexability
+  - title, meta description, canonical, lang, robots, fetch status, Open Graph
+- Machine readability
+  - JSON-LD, schema types, heading structure, internal links, image alts
+- Answer extractability
+  - opening paragraph, FAQ, lists, tables, heading chunking, paragraph density
+- Trust and citation
+  - author, date, publisher, citations, depth, risk-sensitive trust expectations
+- Added value
+  - specifics, comparisons, trade-offs, structured synthesis
+- Task resolution
+  - conclusion first, recommendation signal, scenario split, trade-offs, next step
 
 ## Limitations
 
