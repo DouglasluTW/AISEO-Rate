@@ -164,6 +164,173 @@ MEDIUM_RISK_TERMS = (
     "比較",
 )
 
+# Re-declare multilingual term catalogs with clean UTF-8 values. This overrides
+# the legacy mojibake literals above without having to rewrite the original
+# block in-place.
+QUESTION_PREFIXES_CJK = (
+    "什麼",
+    "为何",
+    "為何",
+    "為什麼",
+    "如何",
+    "怎麼",
+    "哪个",
+    "哪個",
+    "哪些",
+    "哪裡",
+    "哪里",
+    "是否",
+    "值不值得",
+)
+
+DECISION_TERMS = (
+    "recommend",
+    "recommended",
+    "best",
+    "should choose",
+    "worth it",
+    "pick",
+    "ideal",
+    "top choice",
+    "recommendation",
+    "winner",
+    "our pick",
+    "top pick",
+    "最值得買",
+    "最值得",
+    "推薦",
+    "建議",
+    "首選",
+    "最佳",
+    "最適合",
+    "怎麼選",
+    "選這個",
+    "值得買",
+    "值得用",
+    "值得考慮",
+)
+
+SCENARIO_TERMS = (
+    "if you",
+    "for teams",
+    "for beginners",
+    "for small",
+    "for side sleepers",
+    "depending on",
+    "if your",
+    "for most people",
+    "for power users",
+    "如果你",
+    "如果是",
+    "如果想要",
+    "適合",
+    "族群",
+    "情境",
+    "用途",
+    "預算",
+    "需求",
+    "小家庭",
+    "租屋",
+    "學生",
+    "創作者",
+    "團隊",
+)
+
+TRADEOFF_TERMS = (
+    "however",
+    "but",
+    "on the other hand",
+    "compared",
+    "vs",
+    "versus",
+    "pros",
+    "cons",
+    "trade-off",
+    "downside",
+    "upside",
+    "compromise",
+    "取捨",
+    "優點",
+    "缺點",
+    "優勢",
+    "劣勢",
+    "不過",
+    "另一方面",
+    "比較",
+    "差異",
+)
+
+NEXT_STEP_TERMS = (
+    "start with",
+    "choose",
+    "buy",
+    "book",
+    "sign up",
+    "contact",
+    "try",
+    "go with",
+    "next step",
+    "you can start by",
+    "建議先",
+    "先從",
+    "可以先",
+    "直接選",
+    "現在就",
+    "立即",
+    "馬上",
+    "預約",
+    "購買",
+    "試用",
+    "聯絡",
+)
+
+HIGH_RISK_TERMS = (
+    "insurance",
+    "loan",
+    "mortgage",
+    "investment",
+    "credit card",
+    "tax",
+    "retirement",
+    "legal",
+    "lawyer",
+    "attorney",
+    "medical",
+    "symptom",
+    "treatment",
+    "diagnosis",
+    "drug",
+    "保險",
+    "貸款",
+    "房貸",
+    "投資",
+    "信用卡",
+    "稅",
+    "退休",
+    "法律",
+    "律師",
+    "醫療",
+    "症狀",
+    "治療",
+    "診斷",
+    "藥",
+    "藥物",
+    "處方",
+)
+
+MEDIUM_RISK_TERMS = (
+    "travel insurance",
+    "supplement",
+    "safety",
+    "warranty",
+    "certification",
+    "旅平險",
+    "保健品",
+    "安全",
+    "保固",
+    "認證",
+)
+
 RELEVANT_SCHEMA_TYPES = {
     "article",
     "blogposting",
@@ -1110,12 +1277,21 @@ def has_any_term(text: str, terms: Iterable[str]) -> bool:
 
 def has_conclusion_first_signal(signals: PageSignals) -> bool:
     opening = first_blocks_text(signals, 2)
-    return bool(opening) and has_any_term(opening, DECISION_TERMS)
+    if bool(opening) and has_any_term(opening, DECISION_TERMS):
+        return True
+    title_like = " ".join([signals.title] + [text for tag, text in signals.headings[:2] if tag == "h1"]).lower()
+    return bool(title_like) and has_any_term(title_like, DECISION_TERMS) and (
+        len(signals.list_items) >= 3 or signals.has_table
+    )
 
 
 def has_recommendation_signal(signals: PageSignals) -> bool:
-    window = " ".join(signals.paragraphs[:4] + signals.list_items[:6]).lower()
-    return has_any_term(window, DECISION_TERMS)
+    window = " ".join([signals.title] + [text for _, text in signals.headings[:4]] + signals.paragraphs[:4] + signals.list_items[:6]).lower()
+    if has_any_term(window, DECISION_TERMS):
+        return True
+    return bool(signals.title) and has_any_term(signals.title, DECISION_TERMS) and (
+        len(signals.list_items) >= 3 or signals.has_table
+    )
 
 
 def has_scenario_split_signal(signals: PageSignals) -> bool:
@@ -1156,6 +1332,35 @@ def classify_topic_risk(signals: PageSignals) -> str:
     if has_any_term(text, MEDIUM_RISK_TERMS):
         return "medium"
     return "low"
+
+
+def is_question_like(text: str) -> bool:
+    lowered = text.strip().lower()
+    if "?" in lowered or "faq" in lowered:
+        return True
+    if any(lowered.startswith(word + " ") for word in QUESTION_WORDS):
+        return True
+    stripped = text.strip()
+    return any(stripped.startswith(prefix) for prefix in QUESTION_PREFIXES_CJK)
+
+
+def count_specificity_markers(signals: PageSignals) -> int:
+    text = signals.visible_text[:4000]
+    patterns = [
+        r"\$\d+",
+        r"(?:usd|eur|gbp|ntd|twd|nt\$|us\$|\$|¥|€|£)\s?\d+(?:[.,]\d+)?",
+        r"\d+(?:[.,]\d+)?\s?(?:usd|eur|gbp|ntd|twd|kg|km|gb|tb|w|hz|mah|inch|inches|cm|mm|坪|人|年|月|天|小時|分鐘|元|塊|台|款)",
+        r"\d+%",
+        r"\b20\d{2}\b",
+        r"\bunder\s+\$?\d+",
+        r"\bbelow\s+\$?\d+",
+        r"\d+\s?到\s?\d+",
+        r"\d+\s?-\s?\d+",
+    ]
+    total = 0
+    for pattern in patterns:
+        total += len(re.findall(pattern, text, flags=re.IGNORECASE))
+    return total
 
 
 def summarize_extractability(signals: PageSignals) -> str:
