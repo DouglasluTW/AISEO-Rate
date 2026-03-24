@@ -732,7 +732,12 @@ def render_report(score: float, breakdowns: list[ScoreBreakdown], signals: PageS
 
 
 def render_json(score: float, breakdowns: list[ScoreBreakdown], signals: PageSignals) -> str:
-    payload = {
+    payload = build_payload(score, breakdowns, signals)
+    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageSignals) -> dict[str, object]:
+    return {
         "score": score,
         "source": signals.source,
         "http_status": signals.http_status,
@@ -764,7 +769,13 @@ def render_json(score: float, breakdowns: list[ScoreBreakdown], signals: PageSig
         },
         "suggestions": collect_suggestions(signals),
     }
-    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+def score_target(url: str | None = None, file_path: str | None = None) -> dict[str, object]:
+    html, source, http_status, fetch_warning = load_input(url, file_path)
+    signals = parse_page(html, source, http_status=http_status, fetch_warning=fetch_warning)
+    score, breakdowns = score_page(signals)
+    return build_payload(score, breakdowns, signals)
 
 
 def main() -> int:
@@ -780,10 +791,30 @@ def main() -> int:
         parser.error("Use only one of --url or --file.")
 
     try:
-        html, source, http_status, fetch_warning = load_input(args.url, args.file)
-        signals = parse_page(html, source, http_status=http_status, fetch_warning=fetch_warning)
-        score, breakdowns = score_page(signals)
-        output = render_json(score, breakdowns, signals) if args.json else render_report(score, breakdowns, signals)
+        payload = score_target(args.url, args.file)
+        if args.json:
+            output = json.dumps(payload, ensure_ascii=False, indent=2)
+        else:
+            breakdowns = [
+                ScoreBreakdown(
+                    name=item["name"],
+                    points=float(item["points"]),
+                    max_points=float(item["max_points"]),
+                    reasons=list(item["reasons"]),
+                )
+                for item in payload["breakdown"]
+            ]
+            signals = PageSignals(
+                source=str(payload["source"]),
+                http_status=payload["http_status"],
+                fetch_warning=str(payload["fetch_warning"]),
+            )
+            signals.meta_description = str(payload["signals"]["meta_description"])
+            signals.canonical = str(payload["signals"]["canonical"])
+            signals.lang = str(payload["signals"]["lang"])
+            signals.llms_txt_found = bool(payload["signals"]["llms_txt_found"])
+            signals.has_faq_section = bool(payload["signals"]["has_faq_section"])
+            output = render_report(float(payload["score"]), breakdowns, signals)
         print(output)
         return 0
     except Exception as exc:

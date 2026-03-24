@@ -25,6 +25,8 @@ That is intentional:
 ## Files
 
 - `aeo_score.py`: main scoring script
+- `app.py`: local web server for the browser UI
+- `web/`: static frontend files
 - `aeo_queries_template.csv`: batch query template
 
 ## Quick Start
@@ -34,6 +36,27 @@ python aeo_score.py --url https://example.com
 python aeo_score.py --url https://example.com --json
 python aeo_score.py --file .\sample.html
 ```
+
+## Browser UI
+
+Run the local web app:
+
+```bash
+python app.py
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+Paste a public URL into the form and the app will return:
+
+- an overall score
+- category breakdowns
+- detected signals
+- priority fixes
 
 ## Query Template
 
