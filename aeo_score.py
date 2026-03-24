@@ -737,12 +737,14 @@ def render_json(score: float, breakdowns: list[ScoreBreakdown], signals: PageSig
 
 
 def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageSignals) -> dict[str, object]:
+    lenses = derive_lenses(breakdowns, signals)
     return {
         "score": score,
         "source": signals.source,
         "http_status": signals.http_status,
         "fetch_warning": signals.fetch_warning,
         "looks_like_block_page": looks_like_block_page(signals),
+        "posture": classify_posture(score),
         "breakdown": [
             {
                 "name": item.name,
@@ -752,6 +754,7 @@ def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageS
             }
             for item in breakdowns
         ],
+        "lenses": lenses,
         "signals": {
             "title": signals.title,
             "meta_description": signals.meta_description,
@@ -769,6 +772,147 @@ def build_payload(score: float, breakdowns: list[ScoreBreakdown], signals: PageS
         },
         "suggestions": collect_suggestions(signals),
     }
+
+
+def classify_posture(score: float) -> str:
+    if score >= 8.5:
+        return "This page is structurally strong enough to be read, cited, and reused."
+    if score >= 7.0:
+        return "This page has a solid base, but a few missing signals are holding it back."
+    if score >= 5.0:
+        return "This page is understandable, but not consistently machine-ready."
+    if score >= 3.0:
+        return "This page has content, but its answer structure is still weak."
+    return "This page is not yet shaped like a reusable answer."
+
+
+def derive_lenses(breakdowns: list[ScoreBreakdown], signals: PageSignals) -> list[dict[str, object]]:
+    breakdown_map = {item.name: item for item in breakdowns}
+
+    tech_ratio = normalized_ratio(breakdown_map["Technical foundation"])
+    schema_ratio = normalized_ratio(breakdown_map["Structured data"])
+    answer_ratio = normalized_ratio(breakdown_map["Answer quality"])
+    trust_ratio = normalized_ratio(breakdown_map["Trust and entities"])
+    structure_ratio = normalized_ratio(breakdown_map["Structure"])
+    ai_ratio = normalized_ratio(breakdown_map["AI readiness"])
+
+    lenses = [
+        {
+            "name": "Extractability",
+            "score": weighted_score(
+                answer_ratio * 0.40
+                + structure_ratio * 0.20
+                + schema_ratio * 0.25
+                + ai_ratio * 0.15
+            ),
+            "summary": summarize_extractability(signals),
+        },
+        {
+            "name": "Resolution",
+            "score": weighted_score(
+                answer_ratio * 0.55
+                + trust_ratio * 0.20
+                + structure_ratio * 0.15
+                + tech_ratio * 0.10
+            ),
+            "summary": summarize_resolution(signals),
+        },
+        {
+            "name": "Citation trust",
+            "score": weighted_score(
+                trust_ratio * 0.60
+                + schema_ratio * 0.20
+                + tech_ratio * 0.10
+                + ai_ratio * 0.10
+            ),
+            "summary": summarize_trust(signals),
+        },
+        {
+            "name": "Surface visibility",
+            "score": weighted_score(
+                tech_ratio * 0.35
+                + answer_ratio * 0.25
+                + schema_ratio * 0.20
+                + trust_ratio * 0.10
+                + ai_ratio * 0.10
+            ),
+            "summary": summarize_visibility(signals),
+        },
+        {
+            "name": "Content structure",
+            "score": weighted_score(
+                structure_ratio * 0.45
+                + answer_ratio * 0.25
+                + tech_ratio * 0.15
+                + schema_ratio * 0.15
+            ),
+            "summary": summarize_structure(signals),
+        },
+    ]
+    return lenses
+
+
+def normalized_ratio(item: ScoreBreakdown) -> float:
+    if item.max_points == 0:
+        return 0.0
+    return item.points / item.max_points
+
+
+def weighted_score(value: float) -> float:
+    return round(max(1.0, min(10.0, value * 10.0)), 1)
+
+
+def summarize_extractability(signals: PageSignals) -> str:
+    parts: list[str] = []
+    if signals.json_ld_blocks:
+        parts.append("schema exists")
+    if signals.has_faq_section:
+        parts.append("FAQ exists")
+    if len(signals.list_items) >= 3:
+        parts.append("list structure exists")
+    if not parts:
+        return "Low extraction support. Add schema, lists, and FAQ-style blocks."
+    return "Good extraction shape with " + ", ".join(parts[:3]) + "."
+
+
+def summarize_resolution(signals: PageSignals) -> str:
+    if signals.paragraphs and len(signals.list_items) >= 3:
+        return "The page gives content and comparison structure, but may still need a clearer conclusion."
+    if signals.paragraphs:
+        return "The page starts to answer the topic, but the decision path is still thin."
+    return "The page lacks a strong answer-first body."
+
+
+def summarize_trust(signals: PageSignals) -> str:
+    trust_parts: list[str] = []
+    if signals.author_mentions or signals.schema_has_author:
+        trust_parts.append("author")
+    if signals.date_mentions or signals.schema_has_date:
+        trust_parts.append("date")
+    if signals.organization_mentions or signals.schema_has_publisher:
+        trust_parts.append("publisher")
+    if len(unique_domains(signals.external_links)) >= 1:
+        trust_parts.append("citations")
+    if not trust_parts:
+        return "Trust signals are weak. Add authorship, freshness, and verifiable references."
+    return "Trust layer includes " + ", ".join(trust_parts[:4]) + "."
+
+
+def summarize_visibility(signals: PageSignals) -> str:
+    if signals.meta_description and signals.canonical and (signals.og_title or signals.og_description):
+        return "Metadata is helping the page surface cleanly across search and social contexts."
+    if signals.title:
+        return "The page has some visibility signals, but metadata is incomplete."
+    return "The page lacks the baseline metadata needed for broader visibility."
+
+
+def summarize_structure(signals: PageSignals) -> str:
+    h2_count = sum(1 for tag, _ in signals.headings if tag == "h2")
+    if h2_count >= 2 and len(signals.internal_links) >= 1:
+        return "The page is segmented well enough for scanning and reuse."
+    if h2_count >= 1:
+        return "The page has basic structure, but secondary organization is still weak."
+    return "The page needs clearer sectioning and internal architecture."
 
 
 def score_target(url: str | None = None, file_path: str | None = None) -> dict[str, object]:

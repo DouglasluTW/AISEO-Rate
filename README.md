@@ -1,20 +1,51 @@
 # AEO Score
 
-A lightweight AEO (AI SEO) scoring tool for webpages.
+An explainable AI SEO diagnostic system for webpages.
 
-This project reads a public webpage or local HTML file, extracts explainable
-signals, and returns an AEO completeness score from `1.0` to `10.0`.
+Instead of treating AEO as a single score, this project frames it as a
+multi-state audit. A page is evaluated for whether it can be read, trusted,
+cited, and chosen across search and AI answer surfaces.
+
+## Product Narrative
+
+You can present this project in at least three ways:
+
+- `AI Readability Audit`
+  Checks whether a page is machine-readable, extractable, and summary-friendly.
+- `Citation Trust Review`
+  Checks whether a page has the authorship, freshness, and evidence needed to be cited.
+- `Decision Clarity Check`
+  Checks whether a page actually resolves a user task instead of only presenting information.
+
+Under the hood, the project supports both direct URL scoring and query-driven
+batch workflows.
+
+## Five Diagnostic Lenses
+
+Every scored page is decomposed into five product-level lenses:
+
+- `Extractability`
+  Can systems reliably parse and reuse the page?
+- `Resolution`
+  Does the page structure help the reader reach an answer or decision?
+- `Citation trust`
+  Does the page look trustworthy enough to cite?
+- `Surface visibility`
+  Does the page have the metadata and framing to surface cleanly?
+- `Content structure`
+  Is the page segmented well enough to scan and repurpose?
 
 ## What It Does
 
 - Scores a page with an explainable heuristic rubric
-- Breaks scoring into technical, schema, answer quality, trust, structure, and AI readiness
-- Supports both direct page scoring and query-driven batch workflows
-- Emits either human-readable text or machine-readable JSON
+- Decomposes results into both raw scoring layers and product-level lenses
+- Supports a local browser UI for URL-based audits
+- Supports query-driven batch workflows
+- Emits both human-readable text and machine-readable JSON
 
 ## Current Status
 
-This is an explainable heuristic scorer, not a trained ranking model.
+This is an explainable heuristic system, not a trained ranking model.
 
 That is intentional:
 
@@ -24,7 +55,7 @@ That is intentional:
 
 ## Files
 
-- `aeo_score.py`: main scoring script
+- `aeo_score.py`: main scoring engine
 - `app.py`: local web server for the browser UI
 - `web/`: static frontend files
 - `aeo_queries_template.csv`: batch query template
@@ -54,7 +85,8 @@ http://127.0.0.1:8000
 Paste a public URL into the form and the app will return:
 
 - an overall score
-- category breakdowns
+- five diagnostic lenses
+- operational layer breakdowns
 - detected signals
 - priority fixes
 
@@ -70,7 +102,7 @@ Use `aeo_queries_template.csv` when you want the workflow to be:
 Template columns:
 
 ```text
-id, query, language, region, result_mode, notes
+編號, 題目, 語言, 地區, 結果模式, 備註
 ```
 
 `result_mode` currently means how many organic search results should be evaluated:

@@ -6,29 +6,32 @@ const scoreValue = document.getElementById("score-value");
 const scoreRing = document.getElementById("score-ring");
 const scoreHeadline = document.getElementById("score-headline");
 const sourceLine = document.getElementById("source-line");
+const postureLine = document.getElementById("posture-line");
 const warningBox = document.getElementById("warning-box");
+const lensGrid = document.getElementById("lens-grid");
 const breakdownList = document.getElementById("breakdown-list");
 const suggestionsList = document.getElementById("suggestions-list");
 const signalsGrid = document.getElementById("signals-grid");
+const lensTemplate = document.getElementById("lens-template");
 const breakdownTemplate = document.getElementById("breakdown-item-template");
 const signalTemplate = document.getElementById("signal-template");
 
 const signalOrder = [
   ["Title", (payload) => payload.signals.title || "Missing"],
-  ["Meta description", (payload) => payload.signals.meta_description ? "Detected" : "Missing"],
-  ["Canonical", (payload) => payload.signals.canonical ? "Detected" : "Missing"],
-  ["Schema types", (payload) => payload.signals.schema_types.length ? payload.signals.schema_types.join(", ") : "None"],
-  ["FAQ section", (payload) => payload.signals.has_faq_section ? "Yes" : "No"],
+  ["Meta description", (payload) => (payload.signals.meta_description ? "Detected" : "Missing")],
+  ["Canonical", (payload) => (payload.signals.canonical ? "Detected" : "Missing")],
+  ["Schema types", (payload) => (payload.signals.schema_types.length ? payload.signals.schema_types.join(", ") : "None")],
+  ["FAQ section", (payload) => (payload.signals.has_faq_section ? "Yes" : "No")],
   ["Internal links", (payload) => String(payload.signals.internal_links)],
   ["External links", (payload) => String(payload.signals.external_links)],
   ["Word count", (payload) => String(payload.signals.word_count)],
   ["Image alts", (payload) => String(payload.signals.image_alts)],
-  ["llms.txt", (payload) => payload.signals.llms_txt_found ? "Detected" : "Not detected"],
+  ["llms.txt", (payload) => (payload.signals.llms_txt_found ? "Detected" : "Not detected")],
 ];
 
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
-  statusText.textContent = isLoading ? "Scoring..." : "Ready";
+  statusText.textContent = isLoading ? "Auditing..." : "Ready";
 }
 
 function setScore(score) {
@@ -36,6 +39,32 @@ function setScore(score) {
   scoreValue.textContent = Number.isFinite(score) ? safeScore.toFixed(1) : "--";
   const degrees = `${(Math.max(0, Math.min(safeScore, 10)) / 10) * 360}deg`;
   scoreRing.style.setProperty("--ring-angle", degrees);
+}
+
+function lensTone(score) {
+  if (score >= 8.5) {
+    return "strong";
+  }
+  if (score >= 6.5) {
+    return "steady";
+  }
+  if (score >= 4.5) {
+    return "fragile";
+  }
+  return "weak";
+}
+
+function renderLenses(payload) {
+  lensGrid.replaceChildren();
+  payload.lenses.forEach((lens) => {
+    const node = lensTemplate.content.cloneNode(true);
+    const root = node.querySelector(".lens-card");
+    root.dataset.tone = lensTone(lens.score);
+    node.querySelector(".lens-name").textContent = lens.name;
+    node.querySelector(".lens-score").textContent = `${lens.score.toFixed(1)} / 10`;
+    node.querySelector(".lens-summary").textContent = lens.summary;
+    lensGrid.appendChild(node);
+  });
 }
 
 function renderBreakdown(payload) {
@@ -73,6 +102,7 @@ function renderResult(payload) {
   setScore(payload.score);
   scoreHeadline.textContent = classifyScore(payload.score);
   sourceLine.textContent = payload.source;
+  postureLine.textContent = payload.posture;
 
   const warnings = [];
   if (payload.fetch_warning) {
@@ -90,6 +120,7 @@ function renderResult(payload) {
     warningBox.classList.add("hidden");
   }
 
+  renderLenses(payload);
   renderBreakdown(payload);
   renderSuggestions(payload);
   renderSignals(payload);
@@ -97,25 +128,27 @@ function renderResult(payload) {
 
 function classifyScore(score) {
   if (score >= 8.5) {
-    return "Strong machine-readable page";
+    return "Multi-state visibility asset";
   }
   if (score >= 7.0) {
-    return "Solid baseline with a few gaps";
+    return "Strong page with fixable gaps";
   }
   if (score >= 5.0) {
-    return "Usable, but not reliably extractable";
+    return "Readable, but not fully answer-ready";
   }
   if (score >= 3.0) {
-    return "Thin answer structure";
+    return "Informative, but structurally weak";
   }
-  return "Weak AI SEO foundation";
+  return "Low answer visibility readiness";
 }
 
 function renderError(message) {
   setScore(Number.NaN);
-  scoreHeadline.textContent = "Unable to score this page";
+  scoreHeadline.textContent = "Unable to audit this page";
   sourceLine.textContent = message;
+  postureLine.textContent = "The request failed before a reliable AI SEO posture could be computed.";
   warningBox.classList.add("hidden");
+  lensGrid.replaceChildren();
   breakdownList.replaceChildren();
   suggestionsList.replaceChildren();
   signalsGrid.replaceChildren();

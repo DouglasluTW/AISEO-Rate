@@ -1,14 +1,16 @@
 :root {
-  --bg: #f3efe5;
-  --paper: #fffaf1;
-  --ink: #17211d;
-  --muted: #5f6d66;
-  --line: rgba(23, 33, 29, 0.12);
-  --accent: #d86f28;
-  --accent-soft: rgba(216, 111, 40, 0.14);
-  --good: #2a8a47;
-  --warn: #9d5b17;
-  --shadow: 0 30px 60px rgba(23, 33, 29, 0.08);
+  --bg: #ede8dc;
+  --paper: rgba(255, 249, 238, 0.9);
+  --ink: #18231d;
+  --muted: #607166;
+  --line: rgba(24, 35, 29, 0.12);
+  --accent: #ca5a1d;
+  --accent-2: #f0a266;
+  --shadow: 0 28px 60px rgba(24, 35, 29, 0.08);
+  --strong: #1f7d47;
+  --steady: #7c6d1b;
+  --fragile: #b46a19;
+  --weak: #9f3f2c;
 }
 
 * {
@@ -19,29 +21,34 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(216, 111, 40, 0.18), transparent 28rem),
-    linear-gradient(180deg, #f7f0e1 0%, var(--bg) 45%, #efe8db 100%);
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
+  background:
+    radial-gradient(circle at top left, rgba(202, 90, 29, 0.20), transparent 28rem),
+    radial-gradient(circle at 90% 10%, rgba(240, 162, 102, 0.16), transparent 20rem),
+    linear-gradient(180deg, #f6f0e4 0%, #ede8dc 48%, #e6e0d3 100%);
 }
 
 body {
-  padding: 32px 18px 48px;
+  padding: 30px 16px 46px;
 }
 
 .page-shell {
-  width: min(1120px, 100%);
+  width: min(1180px, 100%);
   margin: 0 auto;
+}
+
+.hero,
+.panel {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
 }
 
 .hero {
   padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  background: rgba(255, 250, 241, 0.82);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow);
+  border-radius: 30px;
 }
 
 .eyebrow,
@@ -49,6 +56,10 @@ body {
 .status-text,
 .helper-text,
 .source-line,
+.posture-line,
+.narrative-label,
+.lens-name,
+.lens-score,
 .signal-name,
 .signal-value,
 .breakdown-score {
@@ -56,27 +67,65 @@ body {
 }
 
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: var(--accent);
   font-size: 0.76rem;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
 }
 
 h1 {
   margin: 0;
   max-width: 12ch;
-  font-size: clamp(2.8rem, 7vw, 5.8rem);
-  line-height: 0.92;
-  letter-spacing: -0.05em;
+  font-size: clamp(2.8rem, 7vw, 5.9rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
 }
 
 .hero-copy {
-  max-width: 48rem;
+  max-width: 54rem;
   margin: 16px 0 0;
   color: var(--muted);
   font-size: 1.05rem;
-  line-height: 1.65;
+  line-height: 1.68;
+}
+
+.narrative-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.narrative-card {
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.16)),
+    rgba(255, 255, 255, 0.34);
+}
+
+.narrative-card h2 {
+  margin: 6px 0 8px;
+  font-size: 1.35rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.narrative-card p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.narrative-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .score-form {
@@ -88,14 +137,14 @@ h1 {
 
 .score-form input,
 .score-form button {
+  min-height: 58px;
   border-radius: 18px;
   border: 1px solid var(--line);
-  min-height: 58px;
 }
 
 .score-form input {
   padding: 0 18px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.72);
   color: var(--ink);
   font-size: 1rem;
 }
@@ -112,7 +161,6 @@ h1 {
 
 .score-form button:hover {
   transform: translateY(-1px);
-  background: #0f1714;
 }
 
 .score-form button:disabled {
@@ -129,20 +177,18 @@ h1 {
 
 .dashboard {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1.1fr 0.9fr;
   gap: 18px;
   margin-top: 18px;
 }
 
 .panel {
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: rgba(255, 250, 241, 0.88);
-  box-shadow: var(--shadow);
   padding: 22px;
+  border-radius: 26px;
 }
 
-.score-panel {
+.score-panel,
+.lens-panel {
   grid-column: 1 / -1;
 }
 
@@ -170,7 +216,7 @@ h1 {
 .score-stage {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 26px;
+  gap: 28px;
   align-items: center;
   margin-top: 18px;
 }
@@ -187,8 +233,8 @@ h1 {
   border-radius: 50%;
   padding: 18px;
   background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.72) 56%, transparent 56%),
-    conic-gradient(var(--accent) var(--ring-angle), rgba(23, 33, 29, 0.08) 0deg);
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.76) 56%, transparent 56%),
+    conic-gradient(var(--accent) var(--ring-angle), rgba(24, 35, 29, 0.08) 0deg);
   transition: background 420ms ease;
 }
 
@@ -199,13 +245,13 @@ h1 {
   height: 100%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 30% 30%, rgba(216, 111, 40, 0.13), transparent 42%),
-    var(--paper);
-  border: 1px solid rgba(23, 33, 29, 0.08);
+    radial-gradient(circle at 30% 30%, rgba(202, 90, 29, 0.14), transparent 42%),
+    rgba(255, 249, 238, 0.95);
+  border: 1px solid rgba(24, 35, 29, 0.08);
 }
 
 .score-value {
-  font-size: 4.8rem;
+  font-size: 4.9rem;
   line-height: 0.9;
   letter-spacing: -0.08em;
 }
@@ -218,27 +264,88 @@ h1 {
 
 .score-summary h2 {
   margin: 0;
-  font-size: clamp(1.7rem, 3vw, 2.6rem);
-  line-height: 1;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 0.98;
   letter-spacing: -0.04em;
 }
 
-.source-line {
-  margin: 10px 0 0;
+.source-line,
+.posture-line {
+  margin: 12px 0 0;
   color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 0.96rem;
+  line-height: 1.65;
 }
 
 .warning-box {
   margin-top: 16px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(157, 91, 23, 0.11);
-  color: var(--warn);
+  background: rgba(159, 63, 44, 0.10);
+  color: var(--weak);
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   font-size: 0.92rem;
   line-height: 1.45;
+}
+
+.lens-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.lens-card,
+.breakdown-item,
+.signal-card {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.lens-card {
+  padding: 16px;
+  border-radius: 20px;
+}
+
+.lens-card[data-tone="strong"] {
+  box-shadow: inset 0 0 0 1px rgba(31, 125, 71, 0.12);
+}
+
+.lens-card[data-tone="steady"] {
+  box-shadow: inset 0 0 0 1px rgba(124, 109, 27, 0.12);
+}
+
+.lens-card[data-tone="fragile"] {
+  box-shadow: inset 0 0 0 1px rgba(180, 106, 25, 0.12);
+}
+
+.lens-card[data-tone="weak"] {
+  box-shadow: inset 0 0 0 1px rgba(159, 63, 44, 0.12);
+}
+
+.lens-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.lens-name {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.lens-score {
+  font-size: 0.9rem;
+}
+
+.lens-summary {
+  margin: 12px 0 0;
+  font-size: 0.97rem;
+  line-height: 1.55;
 }
 
 .breakdown-list,
@@ -250,9 +357,7 @@ h1 {
 
 .breakdown-item {
   padding: 14px;
-  border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.42);
 }
 
 .breakdown-topline {
@@ -277,7 +382,7 @@ h1 {
   height: 10px;
   margin-top: 12px;
   border-radius: 999px;
-  background: rgba(23, 33, 29, 0.08);
+  background: rgba(24, 35, 29, 0.08);
   overflow: hidden;
 }
 
@@ -285,7 +390,7 @@ h1 {
   height: 100%;
   width: 0%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), #f1a466);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
   transition: width 380ms ease;
 }
 
@@ -308,9 +413,7 @@ h1 {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.42);
 }
 
 .signal-name {
@@ -340,8 +443,15 @@ h1 {
   border: 0;
 }
 
+@media (max-width: 1040px) {
+  .lens-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
-  .dashboard {
+  .dashboard,
+  .narrative-grid {
     grid-template-columns: 1fr;
   }
 
@@ -362,10 +472,11 @@ h1 {
   .hero,
   .panel {
     padding: 18px;
-    border-radius: 20px;
+    border-radius: 22px;
   }
 
-  .score-form {
+  .score-form,
+  .lens-grid {
     grid-template-columns: 1fr;
   }
 

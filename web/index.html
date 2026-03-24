@@ -3,21 +3,43 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AEO Score UI</title>
+    <title>Answer Visibility OS</title>
     <link rel="stylesheet" href="/assets/styles.css" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
-        <p class="eyebrow">AI SEO / AEO</p>
-        <h1>Drop in a URL. Get an explainable score.</h1>
-        <p class="hero-copy">
-          Analyze a live webpage for machine-readability, answer structure, trust signals, and extractability.
-        </p>
+        <div class="hero-copyblock">
+          <p class="eyebrow">Answer Visibility OS</p>
+          <h1>Know if your page can be read, trusted, cited, and chosen.</h1>
+          <p class="hero-copy">
+            This project frames AI SEO as a multi-state diagnostic system, not a single checker. Drop in a URL and read
+            the page through five lenses: extractability, resolution, trust, visibility, and structure.
+          </p>
+        </div>
+
+        <div class="narrative-grid">
+          <article class="narrative-card">
+            <p class="narrative-label">Narrative 01</p>
+            <h2>AI Readability Audit</h2>
+            <p>Check whether a page is shaped for extraction, summarization, and reuse.</p>
+          </article>
+          <article class="narrative-card">
+            <p class="narrative-label">Narrative 02</p>
+            <h2>Citation Trust Review</h2>
+            <p>See whether the page has the authorship, freshness, and evidence needed to be cited with confidence.</p>
+          </article>
+          <article class="narrative-card">
+            <p class="narrative-label">Narrative 03</p>
+            <h2>Decision Clarity Check</h2>
+            <p>Understand whether the page actually resolves a decision instead of just presenting information.</p>
+          </article>
+        </div>
+
         <form id="score-form" class="score-form">
           <label class="sr-only" for="url-input">URL</label>
           <input id="url-input" name="url" type="url" placeholder="https://example.com/article" required />
-          <button id="submit-button" type="submit">Score page</button>
+          <button id="submit-button" type="submit">Run multi-lens audit</button>
         </form>
         <p class="helper-text">Use a public `http` or `https` URL. Some websites may block automated fetches.</p>
       </header>
@@ -25,7 +47,7 @@
       <main class="dashboard">
         <section class="panel score-panel">
           <div class="panel-header">
-            <p class="panel-label">Overall score</p>
+            <p class="panel-label">Overall posture</p>
             <p id="status-text" class="status-text">Ready</p>
           </div>
           <div class="score-stage">
@@ -39,15 +61,25 @@
             </div>
             <div class="score-summary">
               <h2 id="score-headline">Paste a page to begin.</h2>
-              <p id="source-line" class="source-line">The UI will show the analyzed source URL and any fetch warnings here.</p>
+              <p id="source-line" class="source-line">The audited URL and fetch status will appear here.</p>
+              <p id="posture-line" class="posture-line">
+                This layer explains what kind of AI SEO posture the page currently projects.
+              </p>
               <div id="warning-box" class="warning-box hidden"></div>
             </div>
           </div>
         </section>
 
+        <section class="panel lens-panel">
+          <div class="panel-header">
+            <p class="panel-label">Five diagnostic lenses</p>
+          </div>
+          <div id="lens-grid" class="lens-grid"></div>
+        </section>
+
         <section class="panel">
           <div class="panel-header">
-            <p class="panel-label">Category breakdown</p>
+            <p class="panel-label">Operational layers</p>
           </div>
           <div id="breakdown-list" class="breakdown-list"></div>
         </section>
@@ -57,7 +89,7 @@
             <p class="panel-label">Priority fixes</p>
           </div>
           <ul id="suggestions-list" class="bullet-list">
-            <li>Score a page to see the highest-impact fixes.</li>
+            <li>Run a page to see the highest-impact fixes.</li>
           </ul>
         </section>
 
@@ -69,6 +101,16 @@
         </section>
       </main>
     </div>
+
+    <template id="lens-template">
+      <article class="lens-card">
+        <div class="lens-topline">
+          <p class="lens-name"></p>
+          <span class="lens-score"></span>
+        </div>
+        <p class="lens-summary"></p>
+      </article>
+    </template>
 
     <template id="breakdown-item-template">
       <article class="breakdown-item">
