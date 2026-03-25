@@ -68,6 +68,7 @@ That is intentional:
 - `app.py`: local web server for the browser UI
 - `web/`: static frontend files
 - `aeo_queries_template.csv`: batch query template
+- `CASEBOOK.md`: benchmark and calibration casebook
 
 ## Quick Start
 
