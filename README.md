@@ -69,6 +69,7 @@ That is intentional:
 - `web/`: static frontend files
 - `aeo_queries_template.csv`: batch query template
 - `CASEBOOK.md`: benchmark and calibration casebook
+- `benchmark/`: tracked benchmark corpus and summaries
 
 ## Quick Start
 
@@ -115,7 +116,7 @@ Template columns:
 編號, 題目, 語言, 地區, 結果模式, 備註
 ```
 
-`result_mode` currently means how many organic search results should be evaluated:
+`結果模式` means how many organic search results should be evaluated:
 
 - `top1`
 - `top3`
@@ -130,7 +131,7 @@ Current scoring dimensions:
 - Machine readability
   - JSON-LD, schema types, heading structure, internal links, image alts
 - Answer extractability
-  - opening paragraph, FAQ, lists, tables, heading chunking, paragraph density
+  - opening paragraph, lists, tables, heading chunking, paragraph density
 - Trust and citation
   - author, date, publisher, citations, depth, risk-sensitive trust expectations
 - Added value
@@ -138,16 +139,25 @@ Current scoring dimensions:
 - Task resolution
   - conclusion first, recommendation signal, scenario split, trade-offs, next step
 
+## Benchmark
+
+This repository now includes a tracked benchmark corpus:
+
+- cleaner query benchmark: 28 queries expanded to top-5 retrieval
+- expanded page corpus: 139 scored pages
+- same-query comparisons: 28 best-vs-worst pairs
+
+Start with `CASEBOOK.md`, then inspect the files under `benchmark/`.
+
 ## Limitations
 
 - Some websites block automated fetches and may return `403` or challenge pages
+- Public search endpoints can degrade or rate-limit long batch runs, which affects candidate quality
 - AEO is not a single formal standard, so the current score is a practical proxy
-- The search-driven batch pipeline is the next step; this repository currently contains the scoring core and input template
 
 ## Roadmap
 
-- query-to-search-result pipeline
-- CSV batch scoring output
+- broader reviewed multilingual benchmark
 - tunable weights per vertical or locale
 - labeled dataset support
 - supervised model training

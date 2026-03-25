@@ -1,121 +1,146 @@
 # CASEBOOK
 
-This document summarizes the current calibration corpus for AISEO-Rate.
+AISEO-Rate now ships with a tracked benchmark corpus, not just a scorer.
 
-It is not a gold-standard benchmark yet. It is a working casebook built from
-the cleaner slice of the batch crawl so the scoring rules can be explained,
-challenged, and improved.
+The goal of this casebook is simple: make the scoring logic explainable,
+auditable, and repeatable. Instead of claiming a single magic score, the
+project keeps a visible set of pages and comparisons that show what the model is
+rewarding and what it is rejecting.
 
-## Scope
+## Corpus Snapshot
 
-- Query-level benchmark: 28 medium or high confidence queries
-- Page-level case library: 81 scored pages
-- Head-to-head pairs: 27 same-query best vs worst comparisons
+- Query benchmark: 28 cleaner medium or high-confidence queries
+- Expanded page corpus: 139 scored pages
+- Head-to-head comparisons: 28 best-vs-worst query pairs
+- Language spread:
+  English, Traditional Chinese, Japanese, Korean, German, French, Spanish,
+  Portuguese, and Hindi
 
-The raw generated CSV files live under `results/` and are not committed by
-default. This document is the checked-in summary layer.
+The benchmark artifacts live in [`benchmark/`](C:\NEW\benchmark):
+
+- [queries_medium_high_top5.csv](C:\NEW\benchmark\queries_medium_high_top5.csv)
+- [expanded_scored_results.csv](C:\NEW\benchmark\expanded_scored_results.csv)
+- [expanded_summary.csv](C:\NEW\benchmark\expanded_summary.csv)
+- [expanded_case_library.csv](C:\NEW\benchmark\expanded_case_library.csv)
+- [expanded_query_pairs.csv](C:\NEW\benchmark\expanded_query_pairs.csv)
+- [expanded_playbook.md](C:\NEW\benchmark\expanded_playbook.md)
 
 ## What This Corpus Is Good For
 
-- validating whether the scoring model rewards decision-ready pages
-- spotting false positives where a page matches terms but does not solve the task
-- comparing good and bad pages inside the same intent bucket
-- turning recurring patterns into repeatable AI SEO rules
+- checking whether the model rewards pages that actually resolve a task
+- finding false positives where keyword overlap hides weak intent resolution
+- comparing strong and weak pages inside the same query frame
+- turning repeated winners into explicit AI SEO rules
 
-## What This Corpus Is Not
+## What It Is Not
 
-- a final multilingual benchmark
+- a final multilingual gold benchmark
 - a search-engine truth set
-- a citation-rate ground truth dataset
+- a direct measure of AI citation rates
 
-Public search endpoints were used to assemble the cases. That means some
-non-English queries still have retrieval noise even inside the cleaner subset.
+Public search endpoints still introduce retrieval noise. The corpus is useful
+for calibration, but it should not be presented as a universal ranking truth.
 
-## Current Shape
+## What Strong Pages Repeatedly Do
 
-The strongest pages in the casebook are mostly English buying or comparison
-pages. They repeatedly do a few things well:
+Across the current expanded corpus, the strongest pages usually:
 
-- they recommend or rank
-- they use list or comparison structure
-- they include strong metadata and structured data
-- they show authorship, freshness, and publisher signals together
-- they explain trade-offs instead of only describing features
+- make an explicit recommendation
+- compare trade-offs instead of listing features only
+- split advice by scenario, audience, or budget
+- carry author, date, and publisher signals together
+- expose clean metadata and structured data
+- turn the answer into reusable units such as lists, ranked picks, and tables
 
-The weakest pages tend to be one of these failure modes:
+This is why the current scoring model weights:
 
-- glossary or grammar pages that match surface keywords only
-- directory or store-locator pages with no decision support
-- forum or community pages that mention the topic but do not resolve it
-- generic portal pages that are structurally fine but off-intent
+- task resolution
+- trust stack
+- machine readability
+- query fit
 
-## Strong Cases
+more heavily than cosmetic FAQ-style formatting alone.
 
-These are representative pages the current model treats as genuinely useful:
+## What Weak Pages Repeatedly Look Like
+
+The weakest cases are usually one of these:
+
+- grammar or glossary pages matching interrogatives like `what`, `which`, or `quel`
+- directory or store-locator pages with no recommendation path
+- community threads that mention the topic without resolving it
+- generic portal pages that match place names or nouns but miss the task
+
+The scorer should treat these as weak even when they share surface vocabulary
+with the query.
+
+## Representative Strong Cases
 
 1. `What is the best espresso machine under $500 for a small apartment?`
-   High-scoring pages are compact buying guides with price constraints, clear picks, and apartment-specific framing.
+   Strong pages make a direct pick, preserve the budget constraint, and discuss
+   apartment fit.
 
 2. `Which laptop is best for college and light video editing under $900?`
-   High-scoring pages compare options with budget constraints and usage-fit language, not just specs.
+   Strong pages combine budget, workload, and trade-off framing instead of only
+   listing raw specs.
 
 3. `Which CRM is best for a 10-person B2B startup with a small sales team?`
-   Strong pages recommend by team size and role, and make trade-offs visible.
+   Strong pages recommend by team size, workflow, and sales complexity.
 
 4. `What is the cheapest unlimited phone plan with good 5G coverage in 2026?`
-   Strong pages combine cost, plan comparison, and carrier trade-offs.
+   Strong pages compare cost, carrier trade-offs, and coverage fit.
 
-## Weak Cases
+## Representative Failure Modes
 
-These are representative false or weak matches that should not be treated as
-good AI SEO examples even if they mention the right terms:
+1. Keyword collision
+   Example: pages about grammar, translation, or definitions triggered by
+   `what`, `which`, `quel`, or similar tokens.
 
-1. grammar pages triggered by interrogative words like `what`, `which`, or `quel`
-2. city or portal pages that match geography but not the service task
-3. store locator pages that do not compare or recommend
-4. forum threads and unrelated community pages that only touch the topic
+2. Structural mismatch
+   Example: store locators, city portals, or generic listings that are
+   crawlable but not decision-ready.
 
-## Calibration Takeaways
+3. Intent mismatch
+   Example: a page about the underlying entity, but not the decision the query
+   asks the user to make.
 
-The strongest signals from this corpus are:
+## Calibration Decisions Taken So Far
 
-- recommendation signal
-- trade-off signal
-- scenario split
-- trust stack: author, date, publisher, citations
-- machine readability: title, meta, canonical, JSON-LD
-- reusable structure: lists, tables, clear sections
+The benchmark directly changed the scorer in a few ways:
 
-The weaker-than-expected signals are:
+- FAQ and question-heading checks were downgraded from heavy signals to lighter
+  supporting signals.
+- Recommendation and trade-off signals stayed heavy.
+- Query-fit now caps pages that match keywords but fail the decision task.
+- Combined score gives more weight to query-fit than earlier versions.
 
-- FAQ presence by itself
-- question-style headings by themselves
+## How To Read The Corpus
 
-That is why the current model was adjusted to:
+Use the corpus in this order:
 
-- lower the weight of FAQ-style checks
-- keep recommendation and trade-off checks heavy
-- cap query-fit when a page matches keywords but fails decision intent
-- give more influence to query-fit in the final combined score
+1. Is the page discoverable and machine-readable?
+2. Does the page actually resolve the task?
+3. Is the trust stack strong enough for citation or reuse?
 
-## How To Use This Casebook
+If a page fails step 2, strong metadata should not rescue it.
 
-Use it in three passes:
+## Current Limitation
 
-1. Check whether a page is discoverable and machine-readable.
-2. Check whether it actually resolves the query with a recommendation or decision path.
-3. Check whether trust signals are stacked strongly enough to support citation.
+The corpus is broader now, but it is still partly search-provider constrained.
+Some non-English cases remain noisy, and a few queries still retrieve weak
+candidate sets even after reranking.
 
-If a page fails step 2, do not let strong metadata hide that weakness.
+That is why this repository keeps both:
+
+- the benchmark files themselves
+- the explanation of what the benchmark can and cannot prove
 
 ## Next Upgrade
 
-The next meaningful step is not to blindly add more queries. It is to expand
-the corpus with more reviewed page-level cases.
+The next meaningful upgrade is a reviewed corpus, not just a larger one.
 
-A practical next target is:
+A practical target after this version is:
 
-- 120 to 150 page-level cases
-- strong, mid, and weak labels
+- 150 to 200 page-level cases
 - a manually reviewed multilingual slice
-- a smaller gold subset reserved for regression testing
+- stable strong, mid, and weak labels
+- a smaller gold regression set for scorer changes

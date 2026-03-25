@@ -1,0 +1,29 @@
+﻿編號,題目,語言,地區,結果模式,備註
+10,2026母親節送禮，美容家電、保健品還是體驗票券比較容易買到不踩雷？,繁體中文,台灣,TOP5,測試：節慶商業意圖、族群分流、轉換導向
+11,What is the best espresso machine under $500 for a small apartment?,英文,美國,TOP5,"Tests budget filtering, space constraints, and clear purchase recommendation"
+12,Shopify vs WooCommerce: which is better for a 50-product online store?,英文,美國,TOP5,"Tests SMB commerce intent, platform fit, and concise decision framing"
+13,Which laptop is best for college and light video editing under $900?,英文,美國,TOP5,Tests multi-constraint shopping intent and product tradeoff clarity
+15,Where should I buy a refurbished iPhone in the U.S. with a reliable warranty?,英文,美國,TOP5,"Tests purchase-channel trust, warranty clarity, and conversion-oriented answer"
+16,Which CRM is best for a 10-person B2B startup with a small sales team?,英文,美國,TOP5,Tests B2B software evaluation and role-based recommendation
+18,"What is the best mattress for side sleepers under $1,200?",英文,美國,TOP5,"Tests shopping intent, price cap, and comfort-specific comparison"
+19,Is Costco Travel worth using to book a family vacation?,英文,美國,TOP5,Tests service commerce intent and when-to-buy guidance
+20,What is the cheapest unlimited phone plan with good 5G coverage in 2026?,英文,美國,TOP5,"Tests freshness, pricing accuracy, and recommendation confidence"
+23,東京で即日受け取りできるコンタクトレンズ通販はどこですか？,日文,日本,TOP5,測試：在地購買意圖、配送條件、可操作性
+25,ShopifyとBASEでは、小規模ECを始めるならどちらが向いていますか？,日文,日本,TOP5,測試：商業工具比較、初學者情境、轉換導向
+29,在宅勤務なら、昇降デスクと高機能チェアのどちらを先に買うべきですか？,日文,日本,TOP5,測試：預算分配、優先級判斷、情境匹配
+37,"자취방 제습기는 10리터급이면 충분한가요, 16리터를 사야 하나요?",韓文,韓國,TOP5,"테스트: 스펙 이해, 사용 환경 반영, 구매 결론"
+40,2026년 한국에서 알뜰폰 무제한 요금제 추천은 뭐가 있나요?,韓文,韓國,TOP5,"테스트: freshness, 가격 정확성, 빠른 추천"
+49,Berlin: Welche Coworking-Mitgliedschaft ist für 2 bis 3 Tage pro Woche am sinnvollsten?,德文,德國,TOP5,Testet lokale Kaufintention und nutzungsbasierte Empfehlung
+51,Quel robot aspirateur vaut le coup pour un appartement de 60 m² avec un chat ?,法文,法國,TOP5,"Teste les contraintes du foyer, les besoins réels et la conclusion utile"
+52,iPhone ou Samsung : lequel est le plus intéressant si je garde mon téléphone 4 ans ?,法文,法國,TOP5,Teste la valeur long terme et la synthèse orientée décision
+57,Quel matelas choisir quand on dort sur le côté et qu’on a chaud la nuit ?,法文,法國,TOP5,Teste le matching besoin-produit et la priorisation
+58,Paris : quel espace de coworking est rentable pour 2 jours par semaine ?,法文,法國,TOP5,Teste l’intention locale et la recommandation par usage
+63,¿Airbnb u hotel? ¿Qué sale mejor para un fin de semana en Guadalajara?,西班牙文,墨西哥,TOP5,Prueba razonamiento comercial y contexto de viaje
+70,¿Cuál es el mejor plan de internet en casa en México para streaming y home office en 2026?,西班牙文,墨西哥,TOP5,"Prueba freshness, velocidad/precio y conclusión accionable"
+72,Onde comprar iPhone recondicionado no Brasil com garantia de verdade?,葡萄牙文,巴西,TOP5,"Testa intenção transacional, garantia e sinais de credibilidade"
+80,Qual sistema de pagamento ou maquininha é melhor para pequeno negócio no Brasil?,葡萄牙文,巴西,TOP5,Testa SMB fintech intent e utilidade comercial
+81,"25,000 रुपये के अंदर वीडियो और गेमिंग दोनों के लिए कौन सा फोन लेना चाहिए?",印地文,印度,TOP5,"परीक्षण: बजट, बहु-उपयोग परिदृश्य और स्पष्ट निष्कर्ष"
+82,"भारत में वॉटर प्यूरिफायर खरीदते समय RO, UV और UF में क्या चुनें?",印地文,印度,TOP5,परीक्षण: जटिल विकल्प को आसान बनाना और खरीद-उन्मुख जवाब
+84,1BHK फ्लैट के लिए कौन सा इन्वर्टर AC सबसे ज्यादा पैसे वसूल है?,印地文,印度,TOP5,"परीक्षण: कमरे का आकार, बिजली बचत और मूल्य तुलना"
+87,UPI पेमेंट लेने वाले छोटे बिज़नेस के लिए कौन सा बैंक अकाउंट या ऐप बेहतर है?,印地文,印度,TOP5,परीक्षण: SMB fintech intent और उपयोगिता
+89,2026 में भारत में सबसे अच्छा प्रीपेड प्लान कौन सा है अगर रोज बहुत डेटा चाहिए?,印地文,印度,TOP5,"परीक्षण: freshness, डेटा जरूरत और मूल्य"
