@@ -11,28 +11,25 @@
       <header class="hero">
         <div class="hero-copyblock">
           <p class="eyebrow">AI SEO 評分台</p>
-          <h1>看懂你的頁面，是否真的能被 AI 讀懂、信任、引用、採用。</h1>
+          <h1>你的頁面，真的適合被 AI 讀取、引用與採用嗎？</h1>
           <p class="hero-copy">
-            這個專案把 AI SEO 當成多狀態診斷系統，而不是只有單一分數。貼上一個網址後，你可以從五個視角看頁面：
-            可抽取性、解題能力、信任層、可見性潛力，以及內容結構。
+            這不是單一分數工具，而是一個 AI SEO 診斷台。輸入網址後，系統會從可抽取性、解題能力、信任層、
+            可見性與附加價值五個方向，判斷這個頁面目前的完成度。
           </p>
         </div>
 
         <div class="narrative-grid">
           <article class="narrative-card">
-            <p class="narrative-label">敘事 01</p>
-            <h2>AI 可讀性稽核</h2>
-            <p>看這個頁面是不是長得夠適合被抽取、摘要、重組與再利用。</p>
+            <h2>AI 可讀性</h2>
+            <p>看頁面是否具備被抽取、摘要、重組與再利用的結構。</p>
           </article>
           <article class="narrative-card">
-            <p class="narrative-label">敘事 02</p>
-            <h2>引用信任檢視</h2>
-            <p>確認這頁是否具備作者、時間與證據層，足以支撐 AI 引用時的可信度。</p>
+            <h2>引用信任</h2>
+            <p>確認作者、日期、來源與品牌訊號是否足以支持 AI 引用。</p>
           </article>
           <article class="narrative-card">
-            <p class="narrative-label">敘事 03</p>
-            <h2>決策清晰度檢查</h2>
-            <p>判斷這頁是否真的幫使用者解題，而不是只把資訊堆上去。</p>
+            <h2>決策完成度</h2>
+            <p>判斷頁面是否真的幫使用者解題，而不是只列一堆資訊。</p>
           </article>
         </div>
 
@@ -41,8 +38,7 @@
           <input id="url-input" name="url" type="url" placeholder="https://example.com/article" required />
           <button id="submit-button" type="submit">開始評分</button>
         </form>
-        <p class="helper-text">請使用公開的 `http` 或 `https` 網址。部分網站可能會阻擋自動抓取。</p>
-        <a class="lab-link" href="/mosquito">打開蚊子反射實驗室</a>
+        <p class="helper-text">請輸入公開的 `http` 或 `https` 網址。部分網站可能會阻擋自動抓取。</p>
       </header>
 
       <main class="dashboard">
@@ -63,9 +59,7 @@
             <div class="score-summary">
               <h2 id="score-headline">貼上一個網址開始分析。</h2>
               <p id="source-line" class="source-line">這裡會顯示被分析的網址與抓取狀態。</p>
-              <p id="posture-line" class="posture-line">
-                這一層會說明這個頁面目前呈現的是哪一種 AI SEO 狀態。
-              </p>
+              <p id="posture-line" class="posture-line">這裡會顯示頁面目前呈現出的 AI SEO 狀態。</p>
               <div class="audit-stats">
                 <div class="audit-stat">
                   <span class="audit-stat-label">檢查項目</span>

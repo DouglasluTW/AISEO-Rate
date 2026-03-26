@@ -76,9 +76,9 @@ body {
 
 h1 {
   margin: 0;
-  max-width: 12ch;
-  font-size: clamp(2.8rem, 7vw, 5.9rem);
-  line-height: 0.9;
+  max-width: 18ch;
+  font-size: clamp(2rem, 4.4vw, 3.6rem);
+  line-height: 1.02;
   letter-spacing: -0.06em;
 }
 
@@ -118,14 +118,6 @@ h1 {
   color: var(--muted);
   font-size: 0.94rem;
   line-height: 1.6;
-}
-
-.narrative-label {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.76rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 
 .score-form {
@@ -173,23 +165,6 @@ h1 {
   margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.88rem;
-}
-
-.lab-link {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 16px;
-  color: var(--ink);
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: 0.88rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  text-decoration: none;
-}
-
-.lab-link:hover {
-  color: var(--accent);
 }
 
 .dashboard {
@@ -508,8 +483,7 @@ h1 {
 .signal-name {
   color: var(--muted);
   font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
 }
 
 .signal-value {
