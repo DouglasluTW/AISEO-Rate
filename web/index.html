@@ -1,54 +1,87 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Answer Visibility OS</title>
+    <title>AI SEO 評分台</title>
     <link rel="stylesheet" href="/assets/styles.css" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div class="hero-copyblock">
-          <p class="eyebrow">Answer Visibility OS</p>
-          <h1>Know if your page can be read, trusted, cited, and chosen.</h1>
+          <p class="eyebrow">AI SEO 評分台</p>
+          <h1>看懂你的頁面，是否真的能被 AI 讀懂、信任、引用、採用。</h1>
           <p class="hero-copy">
-            This project frames AI SEO as a multi-state diagnostic system, not a single checker. Drop in a URL and read
-            the page through five lenses: extractability, resolution, trust, visibility, and structure.
+            這個專案把 AI SEO 當成多狀態診斷系統，而不是只有單一分數。貼上一個網址後，你可以從五個視角看頁面：
+            可抽取性、解題能力、信任層、可見性潛力，以及內容結構。
           </p>
         </div>
 
         <div class="narrative-grid">
           <article class="narrative-card">
-            <p class="narrative-label">Narrative 01</p>
-            <h2>AI Readability Audit</h2>
-            <p>Check whether a page is shaped for extraction, summarization, and reuse.</p>
+            <p class="narrative-label">敘事 01</p>
+            <h2>AI 可讀性稽核</h2>
+            <p>看這個頁面是不是長得夠適合被抽取、摘要、重組與再利用。</p>
           </article>
           <article class="narrative-card">
-            <p class="narrative-label">Narrative 02</p>
-            <h2>Citation Trust Review</h2>
-            <p>See whether the page has the authorship, freshness, and evidence needed to be cited with confidence.</p>
+            <p class="narrative-label">敘事 02</p>
+            <h2>引用信任檢視</h2>
+            <p>確認這頁是否具備作者、時間與證據層，足以支撐 AI 引用時的可信度。</p>
           </article>
           <article class="narrative-card">
-            <p class="narrative-label">Narrative 03</p>
-            <h2>Decision Clarity Check</h2>
-            <p>Understand whether the page actually resolves a decision instead of just presenting information.</p>
+            <p class="narrative-label">敘事 03</p>
+            <h2>決策清晰度檢查</h2>
+            <p>判斷這頁是否真的幫使用者解題，而不是只把資訊堆上去。</p>
           </article>
         </div>
 
         <form id="score-form" class="score-form">
-          <label class="sr-only" for="url-input">URL</label>
+          <label class="sr-only" for="url-input">網址</label>
           <input id="url-input" name="url" type="url" placeholder="https://example.com/article" required />
-          <button id="submit-button" type="submit">Run multi-lens audit</button>
+          <button id="submit-button" type="submit">開始評分</button>
         </form>
-        <p class="helper-text">Use a public `http` or `https` URL. Some websites may block automated fetches.</p>
+        <p class="helper-text">請使用公開的 `http` 或 `https` 網址。部分網站可能會阻擋自動抓取。</p>
+        <a class="lab-link" href="/mosquito">打開蚊子反射實驗室</a>
       </header>
 
       <main class="dashboard">
+        <section class="panel usage-panel">
+          <div class="panel-header">
+            <p class="panel-label">使用統計</p>
+            <p id="stats-status" class="status-text">讀取中</p>
+          </div>
+          <div class="usage-grid">
+            <article class="usage-card">
+              <span class="usage-label">總訪問數</span>
+              <strong id="visit-count" class="usage-value">--</strong>
+            </article>
+            <article class="usage-card">
+              <span class="usage-label">總評分次數</span>
+              <strong id="score-count" class="usage-value">--</strong>
+            </article>
+            <article class="usage-card">
+              <span class="usage-label">成功次數</span>
+              <strong id="success-count" class="usage-value">--</strong>
+            </article>
+            <article class="usage-card">
+              <span class="usage-label">失敗次數</span>
+              <strong id="failure-count" class="usage-value">--</strong>
+            </article>
+          </div>
+          <div class="domain-panel">
+            <div class="domain-header">
+              <h2>最近評分的 domain 分布</h2>
+              <p id="domain-window" class="domain-window">最近 -- 次提交</p>
+            </div>
+            <div id="domain-list" class="domain-list"></div>
+          </div>
+        </section>
+
         <section class="panel score-panel">
           <div class="panel-header">
-            <p class="panel-label">Overall posture</p>
-            <p id="status-text" class="status-text">Ready</p>
+            <p class="panel-label">整體狀態</p>
+            <p id="status-text" class="status-text">待命中</p>
           </div>
           <div class="score-stage">
             <div class="score-orbit">
@@ -60,18 +93,18 @@
               </div>
             </div>
             <div class="score-summary">
-              <h2 id="score-headline">Paste a page to begin.</h2>
-              <p id="source-line" class="source-line">The audited URL and fetch status will appear here.</p>
+              <h2 id="score-headline">貼上一個網址開始分析。</h2>
+              <p id="source-line" class="source-line">這裡會顯示被分析的網址與抓取狀態。</p>
               <p id="posture-line" class="posture-line">
-                This layer explains what kind of AI SEO posture the page currently projects.
+                這一層會說明這個頁面目前呈現的是哪一種 AI SEO 狀態。
               </p>
               <div class="audit-stats">
                 <div class="audit-stat">
-                  <span class="audit-stat-label">Checks run</span>
+                  <span class="audit-stat-label">檢查項目</span>
                   <strong id="checks-run">--</strong>
                 </div>
                 <div class="audit-stat">
-                  <span class="audit-stat-label">Issues found</span>
+                  <span class="audit-stat-label">發現問題</span>
                   <strong id="issues-found">--</strong>
                 </div>
               </div>
@@ -82,28 +115,28 @@
 
         <section class="panel lens-panel">
           <div class="panel-header">
-            <p class="panel-label">Five diagnostic lenses</p>
+            <p class="panel-label">五維診斷鏡頭</p>
           </div>
           <div id="lens-grid" class="lens-grid"></div>
         </section>
 
         <section class="panel">
           <div class="panel-header">
-            <p class="panel-label">Operational layers</p>
+            <p class="panel-label">評分拆解</p>
           </div>
           <div id="breakdown-list" class="breakdown-list"></div>
         </section>
 
         <section class="panel">
           <div class="panel-header">
-            <p class="panel-label">Audit queue</p>
+            <p class="panel-label">優先修正清單</p>
           </div>
           <div id="issue-list" class="issue-list"></div>
         </section>
 
         <section class="panel">
           <div class="panel-header">
-            <p class="panel-label">Detected signals</p>
+            <p class="panel-label">偵測到的訊號</p>
           </div>
           <div id="signals-grid" class="signals-grid"></div>
         </section>
@@ -148,6 +181,18 @@
         </div>
         <p class="issue-description"></p>
         <p class="issue-fix"></p>
+      </article>
+    </template>
+
+    <template id="domain-template">
+      <article class="domain-item">
+        <div class="domain-meta">
+          <span class="domain-name"></span>
+          <span class="domain-count"></span>
+        </div>
+        <div class="domain-bar-track">
+          <div class="domain-bar-fill"></div>
+        </div>
       </article>
     </template>
 

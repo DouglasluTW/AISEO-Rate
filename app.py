@@ -7,6 +7,8 @@ import json
 import mimetypes
 import os
 import sys
+import threading
+from collections import Counter
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,8 +19,113 @@ from aeo_score import score_target
 
 BASE_DIR = Path(__file__).resolve().parent
 WEB_DIR = BASE_DIR / "web"
+DATA_DIR = BASE_DIR / "data"
+STATS_PATH = DATA_DIR / "usage_stats.json"
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
+RECENT_EVENT_LIMIT = 100
+RECENT_DOMAIN_WINDOW = 50
+STATS_LOCK = threading.Lock()
+
+
+def default_stats() -> dict[str, object]:
+    return {
+        "total_visits": 0,
+        "total_scores": 0,
+        "score_successes": 0,
+        "score_failures": 0,
+        "recent_score_events": [],
+    }
+
+
+def load_stats_locked() -> dict[str, object]:
+    if not STATS_PATH.exists():
+        return default_stats()
+
+    try:
+        payload = json.loads(STATS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return default_stats()
+
+    stats = default_stats()
+    stats["total_visits"] = int(payload.get("total_visits", 0))
+    stats["total_scores"] = int(payload.get("total_scores", 0))
+    stats["score_successes"] = int(payload.get("score_successes", 0))
+    stats["score_failures"] = int(payload.get("score_failures", 0))
+    events = payload.get("recent_score_events", [])
+    if isinstance(events, list):
+        stats["recent_score_events"] = [
+            {"domain": str(item.get("domain", "")).strip(), "success": bool(item.get("success", False))}
+            for item in events
+            if isinstance(item, dict)
+        ][-RECENT_EVENT_LIMIT:]
+    return stats
+
+
+def save_stats_locked(stats: dict[str, object]) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    serializable = {
+        "total_visits": int(stats.get("total_visits", 0)),
+        "total_scores": int(stats.get("total_scores", 0)),
+        "score_successes": int(stats.get("score_successes", 0)),
+        "score_failures": int(stats.get("score_failures", 0)),
+        "recent_score_events": list(stats.get("recent_score_events", []))[-RECENT_EVENT_LIMIT:],
+    }
+    temp_path = STATS_PATH.with_suffix(".tmp")
+    temp_path.write_text(json.dumps(serializable, ensure_ascii=False, indent=2), encoding="utf-8")
+    temp_path.replace(STATS_PATH)
+
+
+def update_stats(mutator) -> dict[str, object]:
+    with STATS_LOCK:
+        stats = load_stats_locked()
+        mutator(stats)
+        save_stats_locked(stats)
+        return build_public_stats(stats)
+
+
+def build_public_stats(stats: dict[str, object]) -> dict[str, object]:
+    recent_events = list(stats.get("recent_score_events", []))[-RECENT_DOMAIN_WINDOW:]
+    counts = Counter(event.get("domain", "") for event in recent_events if event.get("domain"))
+    recent_domains = [
+        {"domain": domain, "count": count}
+        for domain, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    return {
+        "total_visits": int(stats.get("total_visits", 0)),
+        "total_scores": int(stats.get("total_scores", 0)),
+        "score_successes": int(stats.get("score_successes", 0)),
+        "score_failures": int(stats.get("score_failures", 0)),
+        "recent_domain_window": len(recent_events),
+        "recent_domains": recent_domains[:8],
+    }
+
+
+def get_public_stats() -> dict[str, object]:
+    with STATS_LOCK:
+        return build_public_stats(load_stats_locked())
+
+
+def record_visit() -> dict[str, object]:
+    return update_stats(lambda stats: stats.__setitem__("total_visits", int(stats["total_visits"]) + 1))
+
+
+def record_score(domain: str, *, success: bool) -> dict[str, object]:
+    def mutator(stats: dict[str, object]) -> None:
+        stats["total_scores"] = int(stats["total_scores"]) + 1
+        if success:
+            stats["score_successes"] = int(stats["score_successes"]) + 1
+        else:
+            stats["score_failures"] = int(stats["score_failures"]) + 1
+        events = list(stats.get("recent_score_events", []))
+        events.append({"domain": domain, "success": success})
+        stats["recent_score_events"] = events[-RECENT_EVENT_LIMIT:]
+
+    return update_stats(mutator)
+
+
+def extract_domain(value: str) -> str:
+    return (urlparse(value).netloc or "").lower()
 
 
 class AppHandler(BaseHTTPRequestHandler):
@@ -26,7 +133,11 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/":
+            record_visit()
             self._serve_file(WEB_DIR / "index.html")
+            return
+        if self.path == "/api/stats":
+            self._json_response(get_public_stats(), HTTPStatus.OK)
             return
         if self.path == "/mosquito":
             self._serve_file(WEB_DIR / "mosquito.html")
@@ -57,16 +168,19 @@ class AppHandler(BaseHTTPRequestHandler):
 
         url = str(payload.get("url", "")).strip()
         if not url:
-            self._json_response({"error": "URL is required"}, HTTPStatus.BAD_REQUEST)
+            self._json_response({"error": "請輸入網址。"}, HTTPStatus.BAD_REQUEST)
             return
         if not self._is_valid_url(url):
-            self._json_response({"error": "Enter a valid http or https URL"}, HTTPStatus.BAD_REQUEST)
+            self._json_response({"error": "請輸入有效的 http 或 https 網址。"}, HTTPStatus.BAD_REQUEST)
             return
 
+        domain = extract_domain(url)
         try:
             result = score_target(url=url)
+            record_score(domain, success=True)
             self._json_response(result, HTTPStatus.OK)
         except Exception as exc:
+            record_score(domain, success=False)
             self._json_response(
                 {"error": str(exc)},
                 HTTPStatus.BAD_GATEWAY,

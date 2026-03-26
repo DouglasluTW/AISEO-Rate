@@ -175,6 +175,23 @@ h1 {
   font-size: 0.88rem;
 }
 
+.lab-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 16px;
+  color: var(--ink);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+
+.lab-link:hover {
+  color: var(--accent);
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -187,9 +204,121 @@ h1 {
   border-radius: 26px;
 }
 
+.usage-panel,
 .score-panel,
 .lens-panel {
   grid-column: 1 / -1;
+}
+
+.usage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.usage-card,
+.domain-item {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.usage-card {
+  padding: 16px;
+  border-radius: 20px;
+}
+
+.usage-label,
+.domain-window,
+.domain-count {
+  color: var(--muted);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+.usage-label {
+  display: block;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.usage-value {
+  display: block;
+  margin-top: 8px;
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.domain-panel {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.domain-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.domain-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.domain-window {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.domain-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.domain-item {
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+.domain-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.domain-name {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.domain-count {
+  font-size: 0.86rem;
+}
+
+.domain-bar-track {
+  width: 100%;
+  height: 8px;
+  margin-top: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(24, 35, 29, 0.08);
+}
+
+.domain-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 380ms ease;
 }
 
 .panel-header {
@@ -503,6 +632,14 @@ h1 {
   display: none;
 }
 
+.empty-state {
+  margin: 0;
+  color: var(--muted);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -516,6 +653,7 @@ h1 {
 }
 
 @media (max-width: 1040px) {
+  .usage-grid,
   .lens-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -529,6 +667,11 @@ h1 {
 
   .score-stage {
     grid-template-columns: 1fr;
+  }
+
+  .domain-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .score-orbit {
@@ -548,6 +691,7 @@ h1 {
   }
 
   .score-form,
+  .usage-grid,
   .lens-grid {
     grid-template-columns: 1fr;
   }
