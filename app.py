@@ -17,7 +17,7 @@ from aeo_score import score_target
 
 BASE_DIR = Path(__file__).resolve().parent
 WEB_DIR = BASE_DIR / "web"
-HOST = os.getenv("HOST", "127.0.0.1")
+HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
 
@@ -27,6 +27,9 @@ class AppHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if self.path == "/":
             self._serve_file(WEB_DIR / "index.html")
+            return
+        if self.path == "/mosquito":
+            self._serve_file(WEB_DIR / "mosquito.html")
             return
         if self.path.startswith("/assets/"):
             relative_path = self.path.removeprefix("/assets/")
