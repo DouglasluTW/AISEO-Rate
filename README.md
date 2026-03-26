@@ -101,6 +101,32 @@ Paste a public URL into the form and the app will return:
 - detected signals
 - priority fixes
 
+## Deploy Public URL
+
+The simplest public deployment path for the current app is a Python web service
+on Render.
+
+This repo is now deployment-ready for that flow:
+
+- `app.py` reads `HOST` and `PORT` from environment variables
+- `render.yaml` is included for Render deployment
+- `requirements.txt` is included for simple Python build steps
+
+Basic Render flow:
+
+1. Push this repository to GitHub.
+2. Go to [Render](https://render.com/) and create a new `Web Service`.
+3. Connect the GitHub repo.
+4. Render should detect `render.yaml`, or you can set:
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `python app.py`
+5. Deploy. Render will give you a public `https://...onrender.com` URL.
+
+Important:
+
+- GitHub Pages is not enough for this app because the scoring API is Python backend code.
+- For a public URL, you need a backend host such as Render, Railway, Fly.io, or your own server.
+
 ## Query Template
 
 Use `aeo_queries_template.csv` when you want the workflow to be:

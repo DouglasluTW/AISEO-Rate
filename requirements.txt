@@ -1,0 +1,2 @@
+# Standard library app. This file exists so simple platform builds can run
+# `pip install -r requirements.txt` without special handling.
