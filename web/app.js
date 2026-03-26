@@ -14,18 +14,10 @@ const lensGrid = document.getElementById("lens-grid");
 const breakdownList = document.getElementById("breakdown-list");
 const issueList = document.getElementById("issue-list");
 const signalsGrid = document.getElementById("signals-grid");
-const statsStatus = document.getElementById("stats-status");
-const visitCount = document.getElementById("visit-count");
-const scoreCount = document.getElementById("score-count");
-const successCount = document.getElementById("success-count");
-const failureCount = document.getElementById("failure-count");
-const domainWindow = document.getElementById("domain-window");
-const domainList = document.getElementById("domain-list");
 const lensTemplate = document.getElementById("lens-template");
 const breakdownTemplate = document.getElementById("breakdown-item-template");
 const signalTemplate = document.getElementById("signal-template");
 const issueTemplate = document.getElementById("issue-template");
-const domainTemplate = document.getElementById("domain-template");
 
 const signalOrder = [
   ["標題", (payload) => payload.signals.title || "未偵測"],
@@ -248,47 +240,6 @@ function renderError(message) {
   signalsGrid.replaceChildren();
 }
 
-function renderStats(payload) {
-  visitCount.textContent = String(payload.total_visits);
-  scoreCount.textContent = String(payload.total_scores);
-  successCount.textContent = String(payload.score_successes);
-  failureCount.textContent = String(payload.score_failures);
-  domainWindow.textContent = `最近 ${payload.recent_domain_window} 次提交`;
-  domainList.replaceChildren();
-
-  const maxCount = Math.max(...payload.recent_domains.map((item) => item.count), 1);
-  if (!payload.recent_domains.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-state";
-    empty.textContent = "目前還沒有最近的評分 domain。";
-    domainList.appendChild(empty);
-    return;
-  }
-
-  payload.recent_domains.forEach((item) => {
-    const node = domainTemplate.content.cloneNode(true);
-    node.querySelector(".domain-name").textContent = item.domain;
-    node.querySelector(".domain-count").textContent = `${item.count} 次`;
-    node.querySelector(".domain-bar-fill").style.width = `${(item.count / maxCount) * 100}%`;
-    domainList.appendChild(node);
-  });
-}
-
-async function fetchStats() {
-  statsStatus.textContent = "讀取中";
-  try {
-    const response = await fetch("/api/stats");
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "Stats request failed");
-    }
-    renderStats(payload);
-    statsStatus.textContent = "已更新";
-  } catch (error) {
-    statsStatus.textContent = "讀取失敗";
-  }
-}
-
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const url = urlInput.value.trim();
@@ -314,8 +265,5 @@ form.addEventListener("submit", async (event) => {
     renderError(error.message || "發生未預期錯誤");
   } finally {
     setLoading(false);
-    await fetchStats();
   }
 });
-
-fetchStats();

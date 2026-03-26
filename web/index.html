@@ -46,38 +46,6 @@
       </header>
 
       <main class="dashboard">
-        <section class="panel usage-panel">
-          <div class="panel-header">
-            <p class="panel-label">使用統計</p>
-            <p id="stats-status" class="status-text">讀取中</p>
-          </div>
-          <div class="usage-grid">
-            <article class="usage-card">
-              <span class="usage-label">總訪問數</span>
-              <strong id="visit-count" class="usage-value">--</strong>
-            </article>
-            <article class="usage-card">
-              <span class="usage-label">總評分次數</span>
-              <strong id="score-count" class="usage-value">--</strong>
-            </article>
-            <article class="usage-card">
-              <span class="usage-label">成功次數</span>
-              <strong id="success-count" class="usage-value">--</strong>
-            </article>
-            <article class="usage-card">
-              <span class="usage-label">失敗次數</span>
-              <strong id="failure-count" class="usage-value">--</strong>
-            </article>
-          </div>
-          <div class="domain-panel">
-            <div class="domain-header">
-              <h2>最近評分的 domain 分布</h2>
-              <p id="domain-window" class="domain-window">最近 -- 次提交</p>
-            </div>
-            <div id="domain-list" class="domain-list"></div>
-          </div>
-        </section>
-
         <section class="panel score-panel">
           <div class="panel-header">
             <p class="panel-label">整體狀態</p>
@@ -181,18 +149,6 @@
         </div>
         <p class="issue-description"></p>
         <p class="issue-fix"></p>
-      </article>
-    </template>
-
-    <template id="domain-template">
-      <article class="domain-item">
-        <div class="domain-meta">
-          <span class="domain-name"></span>
-          <span class="domain-count"></span>
-        </div>
-        <div class="domain-bar-track">
-          <div class="domain-bar-fill"></div>
-        </div>
       </article>
     </template>
 
