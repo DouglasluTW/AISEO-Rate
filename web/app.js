@@ -54,13 +54,6 @@ const breakdownNameMap = {
   "Task resolution": "任務解決度",
 };
 
-const severityMap = {
-  critical: "關鍵",
-  high: "高",
-  medium: "中",
-  low: "低",
-};
-
 const postureMap = {
   "This page is structurally strong enough to be read, cited, and reused.": "這個頁面的結構已經足夠成熟，能被 AI 讀懂、引用與再利用。",
   "This page has a solid base, but a few missing signals are holding it back.": "這個頁面基礎不差，但還有幾個缺口拖住了整體表現。",
@@ -69,11 +62,18 @@ const postureMap = {
   "This page is not yet shaped like a reusable answer.": "這個頁面還沒有長成可被重複利用的答案形態。",
 };
 
-const exactTextMap = {
-  "Title gives a usable discovery signal.": "標題已具備基本的發現訊號。",
-  "Title exists but is not yet ideal for discovery.": "標題存在，但對搜尋與發現仍不夠理想。",
+const severityMap = {
+  critical: "關鍵",
+  high: "高",
+  medium: "中",
+  low: "低",
+};
+
+const textMap = {
+  "Title gives a usable discovery signal.": "標題已具備可用的發現訊號。",
+  "Title exists but is not yet ideal for discovery.": "標題已存在，但對發現與搜尋仍不夠理想。",
   "Missing title.": "缺少標題。",
-  "Meta description supports clean snippet generation.": "Meta description 有助於產生清楚摘要。",
+  "Meta description supports clean snippet generation.": "Meta description 有助於產生清楚的摘要片段。",
   "Meta description exists but can be sharper.": "Meta description 已存在，但還可以更精準。",
   "Missing meta description.": "缺少 meta description。",
   "Canonical is present.": "已有 canonical。",
@@ -81,13 +81,13 @@ const exactTextMap = {
   "HTML lang is present.": "已有 HTML lang。",
   "Missing HTML lang.": "缺少 HTML lang。",
   "Fetch status is index-friendly.": "抓取狀態對索引友善。",
-  "Fetch status may block normal discovery.": "抓取狀態可能會阻礙正常發現與索引。",
+  "Fetch status may block normal discovery.": "抓取狀態可能會阻礙正常發現。",
   "No noindex directive detected.": "未偵測到 noindex 指令。",
   "Page appears to be noindex.": "頁面看起來帶有 noindex。",
   "Open Graph summary fields exist.": "已有 Open Graph 摘要欄位。",
   "Open Graph is partial.": "Open Graph 設定不完整。",
   "Missing Open Graph summary fields.": "缺少 Open Graph 摘要欄位。",
-  "llms.txt exists, but this is only a minor discovery signal.": "已有 llms.txt，但這只是次要訊號。",
+  "llms.txt exists, but this is only a minor discovery signal.": "已有 llms.txt，但這只是次要的發現訊號。",
   "llms.txt is absent, but this is not a core blocker.": "缺少 llms.txt，但這不是核心阻礙。",
   "JSON-LD was found.": "已偵測到 JSON-LD。",
   "No JSON-LD found.": "未偵測到 JSON-LD。",
@@ -108,7 +108,7 @@ const exactTextMap = {
   "Some image alt signals exist.": "已有部分圖片 alt 訊號。",
   "No image alt signals found.": "未偵測到圖片 alt 訊號。",
   "Opening paragraph is answer-snippet friendly.": "開頭段落適合被擷取成答案摘要。",
-  "Opening paragraph exists but is not strongly answer-first.": "開頭段落存在，但還不夠 answer-first。",
+  "Opening paragraph exists but is not strongly answer-first.": "開頭段落已存在，但還不夠 answer-first。",
   "Missing a clear body opening paragraph.": "缺少清楚的正文開場段落。",
   "Page has FAQ or question-driven headings.": "頁面含 FAQ 或問題導向標題。",
   "Page has at least one question-driven heading.": "頁面至少有一個問題導向標題。",
@@ -159,6 +159,13 @@ const exactTextMap = {
   "The page does not make trade-offs explicit.": "頁面沒有把取捨講清楚。",
   "The page gives an actionable next step.": "頁面提供了可執行的下一步。",
   "The page does not guide the next action clearly.": "頁面沒有清楚指引下一步。",
+  "Metadata is helping the page surface cleanly across search and social contexts.": "這個頁面的 metadata 有助於它在搜尋與社群場景中更清楚地被呈現。",
+  "The page has some visibility signals, but metadata is incomplete.": "這個頁面已有部分可見性訊號，但 metadata 還不完整。",
+  "The page lacks the baseline metadata needed for broader visibility.": "這個頁面缺少更廣泛可見性所需的基礎 metadata。",
+  "The page uses concrete specifics and trade-offs, which feels more like added value.": "這個頁面有具體細節與取捨說明，因此更像真正有附加價值的內容。",
+  "The page includes some concrete detail, but the synthesis layer can be stronger.": "這個頁面已有一些具體細節，但整合與提煉層還可以更強。",
+  "The page still reads more like generic information than a value-added answer.": "這個頁面讀起來仍比較像一般資訊整理，而不是有附加價值的答案。",
+  "Trust signals are weak. Add authorship, freshness, and verifiable references.": "信任訊號偏弱，建議補上作者、新鮮度與可驗證引用。",
   "Missing title": "缺少標題",
   "Title too short": "標題太短",
   "Title too long": "標題太長",
@@ -179,7 +186,6 @@ const exactTextMap = {
   "Missing FAQ or QA schema": "缺少 FAQ 或 QA schema",
   "Missing breadcrumb schema": "缺少 breadcrumb schema",
   "Missing page-level schema": "缺少頁面層級 schema",
-  "Missing H1": "缺少 H1",
   "Missing H2 sections": "缺少 H2 區塊",
   "Missing H3 depth": "缺少 H3 深度",
   "No question-style headings": "缺少問題式標題",
@@ -189,9 +195,7 @@ const exactTextMap = {
   "Missing comparison table": "缺少比較表格",
   "Missing clear opening paragraph": "缺少清楚的開場段落",
   "Too few body paragraphs": "正文段落太少",
-  "Content depth is thin": "內容深度偏薄",
   "Content depth is not substantial": "內容深度仍不夠扎實",
-  "Missing author signal": "缺少作者訊號",
   "Missing publish or update date": "缺少發布或更新日期",
   "Missing publisher signal": "缺少發布者訊號",
   "Missing external citations": "缺少外部引用",
@@ -216,11 +220,11 @@ const exactTextMap = {
   "Trust stack is thin": "信任層偏薄",
   "Metadata stack is thin": "Metadata 層偏薄",
   "The page does not expose a title.": "頁面沒有提供標題。",
-  "Short titles are less descriptive in search and AI surfaces.": "過短的標題在搜尋與 AI 場景中描述力不足。",
+  "Short titles are less descriptive in search and AI surfaces.": "過短標題在搜尋與 AI 場景中的描述力不足。",
   "Long titles are harder to surface cleanly.": "過長標題不利於乾淨呈現。",
   "The page is missing a summary snippet.": "頁面缺少摘要片段。",
-  "Short descriptions often undersell the page.": "過短的描述容易低估頁面價值。",
-  "Long descriptions lose clarity.": "過長的描述會降低清晰度。",
+  "Short descriptions often undersell the page.": "過短描述容易低估頁面價值。",
+  "Long descriptions lose clarity.": "過長描述會降低清晰度。",
   "Canonical signals are missing.": "缺少 canonical 訊號。",
   "Language metadata is missing.": "缺少語言 metadata。",
   "The page appears blocked from indexability.": "頁面看起來被阻擋索引。",
@@ -356,78 +360,45 @@ function translatePosture(value) {
 }
 
 function translateText(value) {
-  return exactTextMap[value] || value;
+  return textMap[value] || value;
 }
 
-function translateSchemaReason(value) {
-  if (!value.startsWith("Detected schema types: ")) {
-    return value;
-  }
-  return value.replace("Detected schema types: ", "偵測到的 schema 類型：");
-}
-
-function translateExtractionSummary(value) {
-  if (!value.startsWith("Good extraction shape with ")) {
-    return value;
+function translateDynamicText(value) {
+  if (value.startsWith("Detected schema types: ")) {
+    return value.replace("Detected schema types: ", "偵測到的 schema 類型：");
   }
 
-  const partMap = {
-    "schema exists": "schema",
-    "FAQ exists": "FAQ",
-    "list structure exists": "列表結構",
-  };
-
-  const raw = value.replace("Good extraction shape with ", "").replace(".", "");
-  const translated = raw
-    .split(",")
-    .map((part) => part.trim())
-    .map((part) => partMap[part] || part);
-  return `可抽取性基礎不錯，目前已具備 ${translated.join("、")}。`;
-}
-
-function translateTrustSummary(value) {
-  if (value === "Trust signals are weak. Add authorship, freshness, and verifiable references.") {
-    return "信任訊號偏弱，建議補上作者、新鮮度與可驗證引用。";
+  if (value.startsWith("Good extraction shape with ")) {
+    const partMap = {
+      "schema exists": "schema",
+      "FAQ exists": "FAQ",
+      "list structure exists": "列表結構",
+    };
+    const raw = value.replace("Good extraction shape with ", "").replace(".", "");
+    const translated = raw
+      .split(",")
+      .map((part) => part.trim())
+      .map((part) => partMap[part] || part);
+    return `可抽取性基礎不錯，目前已具備 ${translated.join("、")}。`;
   }
 
-  if (!value.startsWith("Trust layer includes ")) {
-    return value;
+  if (value.startsWith("Trust layer includes ")) {
+    const partMap = {
+      author: "作者",
+      date: "日期",
+      publisher: "發布者",
+      citations: "引用",
+    };
+    const hasRiskSuffix = value.endsWith(" High-risk topic detected.");
+    const raw = value.replace("Trust layer includes ", "").replace(" High-risk topic detected.", "").replace(".", "");
+    const translated = raw
+      .split(",")
+      .map((part) => part.trim())
+      .map((part) => partMap[part] || part);
+    return `信任層目前包含 ${translated.join("、")}。${hasRiskSuffix ? " 另外，這是高風險主題，信任要求更高。" : ""}`;
   }
 
-  const partMap = {
-    author: "作者",
-    date: "日期",
-    publisher: "發布者",
-    citations: "引用",
-  };
-
-  const suffix = value.endsWith(" High-risk topic detected.") ? " 另外，這是高風險主題，信任要求更高。" : "";
-  const raw = value.replace("Trust layer includes ", "").replace(" High-risk topic detected.", "").replace(".", "");
-  const translated = raw
-    .split(",")
-    .map((part) => part.trim())
-    .map((part) => partMap[part] || part);
-  return `信任層目前包含 ${translated.join("、")}。${suffix}`;
-}
-
-function translateSummary(value) {
-  const direct = translateText(value);
-  if (direct !== value) {
-    return direct;
-  }
-  const schema = translateSchemaReason(value);
-  if (schema !== value) {
-    return schema;
-  }
-  const extractability = translateExtractionSummary(value);
-  if (extractability !== value) {
-    return extractability;
-  }
-  const trust = translateTrustSummary(value);
-  if (trust !== value) {
-    return trust;
-  }
-  return value;
+  return translateText(value);
 }
 
 function setLoading(isLoading) {
@@ -457,7 +428,7 @@ function renderLenses(payload) {
     root.dataset.tone = lensTone(lens.score);
     node.querySelector(".lens-name").textContent = translateLensName(lens.name);
     node.querySelector(".lens-score").textContent = `${lens.score.toFixed(1)} / 10`;
-    node.querySelector(".lens-summary").textContent = translateSummary(lens.summary);
+    node.querySelector(".lens-summary").textContent = translateDynamicText(lens.summary);
     lensGrid.appendChild(node);
   });
 }
@@ -469,7 +440,7 @@ function renderBreakdown(payload) {
     node.querySelector("h3").textContent = translateBreakdownName(item.name);
     node.querySelector(".breakdown-score").textContent = `${item.points.toFixed(1)} / ${item.max_points.toFixed(1)}`;
     node.querySelector(".meter-fill").style.width = `${(item.points / item.max_points) * 100}%`;
-    node.querySelector(".breakdown-reason").textContent = translateSummary(item.reasons[0] || "目前沒有額外說明。");
+    node.querySelector(".breakdown-reason").textContent = translateDynamicText(item.reasons[0] || "目前沒有額外說明。");
     breakdownList.appendChild(node);
   });
 }
