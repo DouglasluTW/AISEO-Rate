@@ -12,7 +12,7 @@ from collections import Counter
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 from aeo_score import score_target
 
@@ -132,24 +132,27 @@ class AppHandler(BaseHTTPRequestHandler):
     server_version = "AEOScoreHTTP/0.1"
 
     def do_GET(self) -> None:
-        if self.path == "/":
+        request_path = urlsplit(self.path).path
+
+        if request_path == "/":
             record_visit()
             self._serve_file(WEB_DIR / "index.html")
             return
-        if self.path == "/api/stats":
+        if request_path == "/api/stats":
             self._json_response(get_public_stats(), HTTPStatus.OK)
             return
-        if self.path == "/mosquito":
+        if request_path == "/mosquito":
             self._serve_file(WEB_DIR / "mosquito.html")
             return
-        if self.path.startswith("/assets/"):
-            relative_path = self.path.removeprefix("/assets/")
+        if request_path.startswith("/assets/"):
+            relative_path = request_path.removeprefix("/assets/")
             self._serve_file(WEB_DIR / relative_path)
             return
         self._json_response({"error": "Not found"}, HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:
-        if self.path != "/api/score":
+        request_path = urlsplit(self.path).path
+        if request_path != "/api/score":
             self._json_response({"error": "Not found"}, HTTPStatus.NOT_FOUND)
             return
 
@@ -181,10 +184,7 @@ class AppHandler(BaseHTTPRequestHandler):
             self._json_response(result, HTTPStatus.OK)
         except Exception as exc:
             record_score(domain, success=False)
-            self._json_response(
-                {"error": str(exc)},
-                HTTPStatus.BAD_GATEWAY,
-            )
+            self._json_response({"error": str(exc)}, HTTPStatus.BAD_GATEWAY)
 
     def log_message(self, fmt: str, *args: object) -> None:
         sys.stdout.write("%s - - [%s] %s\n" % (self.address_string(), self.log_date_time_string(), fmt % args))
